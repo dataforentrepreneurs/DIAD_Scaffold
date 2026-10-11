@@ -1,0 +1,1 @@
+select * from {{ ref('stg_sales_order_line') }}

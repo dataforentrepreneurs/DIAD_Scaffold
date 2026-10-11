@@ -1,0 +1,150 @@
+{
+  "version": "1.1",
+  "client": {
+    "project_id": "Not Configured",
+    "business_name": "YOUR_BUSINESS_NAME",
+    "website_url": "https://your-website.com/",
+    "bq_location": "asia-southeast1",
+    "run_date": "2026-07-17",
+    "run_date_offset_days": -1,
+    "runtime": {
+      "expose_debug_sql": false
+    },
+    "doc_sources": {
+      "google_drive_folder_ids": [
+        "YOUR_DRIVE_FOLDER_ID"
+      ],
+      "notion_parent_page_ids": [
+        "YOUR_NOTION_PARENT_PAGE_ID"
+      ],
+      "confluence_parent_page_id": "YOUR_CONFLUENCE_PARENT_PAGE_ID"
+    },
+    "document_visibility": {
+      "drive": {
+        "external_folder_ids": []
+      },
+      "notion": {
+        "external_page_ids": []
+      },
+      "confluence": {
+        "external_space_keys": []
+      },
+      "defaults": {
+        "drive": "internal",
+        "notion": "internal",
+        "confluence": "internal"
+      }
+    },
+    "export": {
+      "bucket": "YOUR_GCS_BUCKET_NAME",
+      "compress": false,
+      "shard": {
+        "by_date": true,
+        "format": "%Y%m%d"
+      },
+      "raw_base": "raw"
+    },
+    "sources": {
+      "firestore": {
+        "project_id": "YOUR_FIREBASE_PROJECT_ID",
+        "database": "(default)",
+        "dataset": "firestore_export",
+        "consolidated_dataset": "firebase_consolidated",
+        "raw_prefix": "raw/firestore",
+        "collections": [
+          "orders"
+        ],
+        "date_field": {
+          "orders": "createdAt"
+        },
+        "write_disposition": "WRITE_TRUNCATE"
+      },
+      "firebase_auth": {
+        "project_id": "YOUR_FIREBASE_PROJECT_ID",
+        "dataset": "firebase_auth_export",
+        "raw_prefix": "raw/firebase_auth_users",
+        "table_base": "firebase_auth_users"
+      },
+      "google_analytics": {
+        "property_id": "YOUR_GA4_PROPERTY_ID",
+        "measurement_id": "G-XXXXXXXXXX",
+        "dataset": "google_analytics_export",
+        "raw_prefix": "raw/google_analytics"
+      }
+    }
+  },
+  "ingest": {
+    "gcs_prefix": "landing/phase3",
+    "bucket": "YOUR_GCS_BUCKET_NAME",
+    "bucket_region": "asia-southeast1",
+    "prefix_template": "sales/{date-1d:%Y-%m-%d}/",
+    "datasets": {
+      "raw": "ecommerce_raw",
+      "canonical": "ecommerce_canonical",
+      "mart": "ecommerce_mart"
+    },
+    "partitioned": true,
+    "seed_record_counts": {
+      "customers": 50,
+      "products": 60,
+      "orders": 200
+    }
+  },
+  "integrations": {
+    "confluence": {
+      "base_url": "https://YOUR_SUBDOMAIN.atlassian.net/wiki",
+      "username": "your-email@domain.com"
+    }
+  },
+  "document_rag": {
+    "provider": "pinecone",
+    "index_name": "YOUR_PINECONE_INDEX_NAME",
+    "dimension": 384,
+    "metric": "cosine",
+    "embedding_provider": "huggingface",
+    "huggingface_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "chunk_tokens": 300,
+    "chunk_overlap": 50,
+    "top_k": 5
+  },
+  "rag": {
+    "mode": "direct_bq",
+    "provider": "pinecone",
+    "index_name": "YOUR_PINECONE_DOSSIERS_INDEX_NAME",
+    "dimension": 384,
+    "metric": "cosine",
+    "embedding_provider": "huggingface",
+    "huggingface_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 5
+  },
+  "llm": {
+    "primary": {
+      "provider": "openai",
+      "model": "gpt-4.1-mini"
+    },
+    "fallback": {
+      "provider": "google",
+      "model": "gemini-flash-latest"
+    }
+  },
+  "warehouse": {
+    "staging_dataset": "ecommerce_raw",
+    "canonical_dataset": "ecommerce_canonical",
+    "marts_dataset": "ecommerce_mart"
+  },
+  "gcp": {
+    "region": "asia-southeast1",
+    "service_account_key_path": "",
+    "target_service_account": "YOUR_RUNTIME_SERVICE_ACCOUNT_EMAIL",
+    "chatbot_deployer_sa": "YOUR_DEPLOYER_SERVICE_ACCOUNT_EMAIL",
+    "key-file": "",
+    "chatbot_access_sa": "YOUR_RUNTIME_SERVICE_ACCOUNT_EMAIL",
+    "use_gcloud": true,
+    "key_file": ""
+  },
+  "metadata": {
+    "created_by": "YOUR_NAME",
+    "created_date": "2026-07-17",
+    "environment": "production"
+  }
+}

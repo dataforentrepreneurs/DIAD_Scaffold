@@ -1,0 +1,15 @@
+name: 'diad_dbt'
+version: '1.0.0'
+profile: 'diabq'
+model-paths: ['models']
+seed-paths: ['seeds']
+macro-paths: ['macros']
+test-paths: ['tests']
+models:
+  diad_dbt:
+    staging:
+      +materialized: view
+    canonical:
+      +materialized: table
+    marts:
+      +materialized: view

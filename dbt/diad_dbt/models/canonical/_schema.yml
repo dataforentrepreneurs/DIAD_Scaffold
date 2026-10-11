@@ -1,0 +1,58 @@
+version: 2
+models:
+  - name: dim_identity_account
+    columns:
+      - name: uid
+        tests: [not_null, unique]
+  - name: dim_customer
+    columns:
+      - name: customer_sk
+        tests: [not_null, unique]
+      - name: customer_id_bk
+        tests: [not_null]
+  - name: bridge_identity_customer
+    columns:
+      - name: identity_sk
+        tests: [not_null]
+      - name: customer_sk
+        tests: [not_null, relationships: {to: ref('dim_customer'), field: customer_sk}]
+  - name: sales_order_header
+    columns:
+      - name: order_sk
+        tests: [not_null, unique]
+  - name: sales_order_line
+    columns:
+      - name: order_line_sk
+        tests: [not_null, unique]
+      - name: order_sk
+        tests: [not_null, relationships: {to: ref('sales_order_header'), field: order_sk}]
+  - name: payment
+    columns:
+      - name: payment_sk
+        tests: [not_null, unique]
+      - name: order_sk
+        tests: [not_null, relationships: {to: ref('sales_order_header'), field: order_sk}]
+  - name: refund
+    columns:
+      - name: refund_sk
+        tests: [not_null, unique]
+      - name: order_sk
+        tests: [not_null, relationships: {to: ref('sales_order_header'), field: order_sk}]
+  - name: shipment
+    columns:
+      - name: shipment_sk
+        tests: [not_null, unique]
+      - name: order_sk
+        tests: [not_null, relationships: {to: ref('sales_order_header'), field: order_sk}]
+  - name: shipment_item
+    columns:
+      - name: shipment_item_sk
+        tests: [not_null, unique]
+      - name: order_line_sk
+        tests: [not_null, relationships: {to: ref('sales_order_line'), field: order_line_sk}]
+  - name: inventory_snapshot_daily
+    columns:
+      - name: snapshot_date
+        tests: [not_null]
+      - name: product_id_bk
+        tests: [not_null]

@@ -1,0 +1,15 @@
+# scripts/phase9/jobs/Dockerfile.jobs
+# Build a reusable jobs image for DIAD batch scripts (Cloud Run Jobs).
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Python deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy full repo so scripts/config are available
+COPY . .
+
+# Generic job entrypoint
+ENTRYPOINT ["python", "scripts/phase9/jobs/run_phase.py"]

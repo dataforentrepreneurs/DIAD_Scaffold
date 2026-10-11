@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Support Chatbot — {{BUSINESS_NAME}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary-purple: #7f5af0;
+      --primary-hover: #6c47e0;
+      --accent-cyan: #2cb67d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #7f5af0, #2cb67d);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .brand-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .brand-title p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover { color: white; }
+
+    .endpoint-select {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      overflow: hidden;
+    }
+
+    .chat-container {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(16px);
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .msg {
+      display: flex;
+      gap: 1rem;
+      max-width: 85%;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .msg.bot .avatar {
+      background: linear-gradient(135deg, #7f5af0, #6c47e0);
+      color: white;
+    }
+
+    .msg.user .avatar {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+
+    .bubble {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      padding: 1rem 1.25rem;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .msg.user .bubble {
+      background: linear-gradient(135deg, #7f5af0, #6c47e0);
+      border: none;
+      color: white;
+    }
+
+    .quick-chips {
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      border-top: 1px solid var(--card-border);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: rgba(127, 90, 240, 0.2);
+      border-color: var(--primary-purple);
+      color: white;
+    }
+
+    .meta-inputs {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem 0;
+    }
+
+    .input-field {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 0.5rem 0.8rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .input-box {
+      padding: 1rem 1.5rem 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 0.9rem 1.2rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .chat-input:focus {
+      border-color: var(--primary-purple);
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, var(--primary-purple), var(--primary-hover));
+      color: white;
+      border: none;
+      padding: 0 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 15px rgba(127, 90, 240, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">D</div>
+      <div class="brand-title">
+        <h1>Customer Support Chatbot</h1>
+        <p>{{BUSINESS_NAME}} Self-Serve Portal</p>
+      </div>
+    </div>
+    <div class="header-controls">
+      <select id="endpointSelect" class="endpoint-select">
+        <option value="/external/chat">Dashboard Local Relative (/external/chat)</option>
+        <option value="http://localhost:8000/external/chat">Local Dashboard Absolute (http://localhost:8000)</option>
+        <option value="{{EXTERNAL_API_URL}}">Cloud Run (Production Live)</option>
+      </select>
+ 
+      <a href="/portal" class="nav-link">← Portal Home</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="chat-container">
+      <div id="chatMessages" class="chat-messages">
+        <div class="msg bot">
+          <div class="avatar">🛍️</div>
+          <div class="bubble">Hello! Welcome to <strong>{{BUSINESS_NAME}}</strong> support.
+
+I can help you check your order status, tracking info, or answer questions about our return and exchange policies. How can I assist you today?</div>
+        </div>
+      </div>
+
+      <div class="meta-inputs">
+        <input type="email" id="emailInput" class="input-field" placeholder="Optional: Customer Email (e.g. diya.ghosh@shopmail.com)" />
+        <input type="text" id="orderInput" class="input-field" placeholder="Optional: Order # (e.g. ORD-100045)" />
+      </div>
+
+      <div class="quick-chips">
+        <div class="chip" onclick="sendQuick('Where is my order ORD-100045?', 'diya.ghosh@shopmail.com', 'ORD-100045')">📦 Where is my order ORD-100045?</div>
+        <div class="chip" onclick="sendQuick('What is your return & exchange policy?')">🔄 Return & Exchange Policy</div>
+        <div class="chip" onclick="sendQuick('How long does standard shipping take?')">🚚 Shipping & Delivery Time</div>
+      </div>
+
+      <div class="input-box">
+        <input type="text" id="userInput" class="chat-input" placeholder="Type your question here..." onkeypress="handleKey(event)" />
+        <button onclick="sendMessage()" class="send-btn">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function handleKey(e) {
+      if (e.key === 'Enter') sendMessage();
+    }
+
+    function sendQuick(q, email = '', order = '') {
+      document.getElementById('userInput').value = q;
+      if (email) document.getElementById('emailInput').value = email;
+      if (order) document.getElementById('orderInput').value = order;
+      sendMessage();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const question = input.value.trim();
+      if (!question) return;
+
+      const email = document.getElementById('emailInput').value.trim();
+      const orderNumber = document.getElementById('orderInput').value.trim();
+      const selectedEndpoint = document.getElementById('endpointSelect').value;
+
+      appendMessage('user', question);
+      input.value = '';
+
+      const loadingId = appendMessage('bot', 'Thinking...');
+
+      const payload = { question };
+      if (email) payload.email = email;
+      if (orderNumber) payload.order_number = orderNumber;
+
+      const cloudRunUrl = "{{EXTERNAL_API_URL}}";
+      const endpointsToTry = [];
+      if (selectedEndpoint) endpointsToTry.push(selectedEndpoint);
+
+      if (window.location.protocol.startsWith('http') && !endpointsToTry.includes('/external/chat')) {
+        endpointsToTry.push('/external/chat');
+      }
+      if (!endpointsToTry.includes('http://localhost:8000/external/chat')) {
+        endpointsToTry.push('http://localhost:8000/external/chat');
+      }
+      if (!endpointsToTry.includes('http://127.0.0.1:8000/external/chat')) {
+        endpointsToTry.push('http://127.0.0.1:8000/external/chat');
+      }
+      if (cloudRunUrl && !cloudRunUrl.includes('{{') && cloudRunUrl.startsWith('http') && !endpointsToTry.includes(cloudRunUrl)) {
+        endpointsToTry.push(cloudRunUrl);
+      }
+
+      let lastErr = null;
+      for (const ep of endpointsToTry) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          const reply = data.answer || data.response || JSON.stringify(data, null, 2);
+          updateMessage(loadingId, reply);
+          document.getElementById('endpointSelect').value = ep;
+          return;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+
+      updateMessage(loadingId, '⚠️ Error connecting to chatbot backend: ' + (lastErr ? lastErr.message : 'HTTP 404') + '\nPlease verify your server is running at http://localhost:8000 or deploy your Cloud Run service in GCP.');
+    }
+
+    let msgCounter = 0;
+    function appendMessage(role, text) {
+      msgCounter++;
+      const id = 'msg-' + msgCounter;
+      const chat = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.id = id;
+      div.innerHTML = `
+        <div class="avatar">${role === 'bot' ? '🛍️' : '👤'}</div>
+        <div class="bubble">${escapeHtml(text)}</div>
+      `;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return id;
+    }
+
+    function updateMessage(id, text) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.querySelector('.bubble').innerHTML = escapeHtml(text);
+        const chat = document.getElementById('chatMessages');
+        chat.scrollTop = chat.scrollHeight;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\n/g, "<br>");
+    }
+  </script>
+
+</body>
+</html>

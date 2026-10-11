@@ -1,0 +1,14 @@
+diabq:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('KEYFILE_PATH', 'keys/client-service-account.json') }}"
+      project: "{{ env_var('DIAD_PROJECT_ID', 'diamante-diad') }}"
+      dataset: ecommerce_canonical
+      location: "{{ env_var('BQ_LOCATION', 'asia-southeast1') }}"
+      threads: 2
+      priority: interactive
+      retries: 3
+      timeout_seconds: 300

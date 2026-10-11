@@ -1,0 +1,47 @@
+# ==============================================================================
+# DIAD Scaffold — Git Ignore
+# ==============================================================================
+
+# Credentials & secrets (CRITICAL)
+keys/
+*.json
+!config/client_rawdata.json.example
+!package*.json
+.env
+.env.*
+.env.local
+configs/clients/*secrets*
+
+# Python virtual environment & artifacts
+venv/
+.venv/
+venv_dbt/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment scripts
+env.ps1
+env.sh
+
+# Logs & temp files
+logs/
+*.log
+tmp_*
+scratch/
+*.zip
+
+# dbt build artifacts
+target/
+dbt_packages/
+dbt/diad_dbt/target/
+dbt/diad_dbt/dbt_packages/
+dbt/diad_dbt/logs/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db

@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+google-cloud-bigquery
+google-auth
+openai>=1.0.0
+google-genai==0.3.0
+pinecone>=3.0.0
+numpy
+sentence-transformers==2.7.0
+torch==2.3.1

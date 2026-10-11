@@ -1,0 +1,26 @@
+version: 2
+sources:
+  - name: ecommerce_raw
+    database: "{{ env_var('DIAD_PROJECT_ID', 'YOUR_GCP_PROJECT_ID') }}"
+    schema: "ecommerce_raw"
+    tables:
+      - name: dim_customer
+      - name: dim_product
+      - name: warehouse
+      - name: sales_order_header
+      - name: sales_order_line
+      - name: payment
+      - name: refund
+      - name: shipment
+      - name: shipment_item
+      - name: inventory_snapshot_daily
+  - name: firebase_auth_export
+    database: "{{ env_var('DIAD_PROJECT_ID', 'YOUR_GCP_PROJECT_ID') }}"
+    schema: "firebase_auth_export"
+    tables:
+      - name: firebase_auth_users_consolidated
+  - name: firestore_export
+    database: "{{ env_var('DIAD_PROJECT_ID', 'YOUR_GCP_PROJECT_ID') }}"
+    schema: "firestore_export"
+    tables:
+      - name: orders_consolidated

@@ -1,0 +1,18 @@
+# DIAD Onboarding Dashboard - Lightweight Dependencies
+# These are the ONLY packages needed to run the onboarding wizard.
+# The full ML/AI stack (torch, sentence-transformers) is installed
+# later when the pipeline steps actually need them.
+
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+pydantic>=2.0.0
+requests>=2.31.0
+google-cloud-bigquery>=3.0.0
+google-cloud-storage>=2.0.0
+google-cloud-secret-manager>=2.0.0
+google-cloud-firestore>=2.0.0
+google-api-core>=2.0.0
+google-api-python-client>=2.0.0
+google-auth>=2.0.0
+openai>=1.0.0
+pinecone>=3.0.0

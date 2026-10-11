@@ -1,0 +1,4 @@
+/portal              /index.html            200
+/external_chatbot    /external_chatbot.html  200
+/internal_chatbot    /internal_chatbot.html  200
+/*                   /index.html            200

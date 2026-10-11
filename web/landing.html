@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{BUSINESS_NAME}} — AI Intelligence Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary-purple: #7f5af0;
+      --primary-purple-hover: #6c47e0;
+      --accent-cyan: #2cb67d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 2rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #7f5af0, #2cb67d);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: white;
+      box-shadow: 0 8px 20px rgba(127, 90, 240, 0.3);
+    }
+
+    .brand-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(44, 182, 125, 0.15);
+      border: 1px solid rgba(44, 182, 125, 0.3);
+      color: #2cb67d;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #2cb67d;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #2cb67d;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .hero h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      backdrop-filter: blur(16px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-purple), var(--accent-cyan));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(127, 90, 240, 0.4);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: rgba(127, 90, 240, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(127, 90, 240, 0.3);
+    }
+
+    .card.internal .card-icon {
+      background: rgba(44, 182, 125, 0.15);
+      border-color: rgba(44, 182, 125, 0.3);
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-description {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .features-list {
+      list-style: none;
+      margin-bottom: 2rem;
+    }
+
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      margin-bottom: 0.6rem;
+    }
+
+    .features-list li::before {
+      content: '✓';
+      color: var(--accent-cyan);
+      font-weight: bold;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem 1.75rem;
+      background: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-hover));
+      color: white;
+      font-weight: 600;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(127, 90, 240, 0.4);
+    }
+
+    .btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 20px rgba(127, 90, 240, 0.6);
+    }
+
+    .btn.btn-cyan {
+      background: linear-gradient(135deg, #2cb67d, #249e6b);
+      box-shadow: 0 4px 15px rgba(44, 182, 125, 0.4);
+    }
+
+    .btn.btn-cyan:hover {
+      box-shadow: 0 6px 20px rgba(44, 182, 125, 0.6);
+    }
+
+    footer {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--card-border);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">D</div>
+      <div class="brand-title">
+        <h1>{{BUSINESS_NAME}}</h1>
+        <p>DIAD AI Analytics Suite</p>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      Chatbots Operational
+    </div>
+  </header>
+
+  <main>
+    <!-- Onboarding Installation Section for New Clients -->
+    <section style="background: rgba(127, 90, 240, 0.08); border: 1px solid rgba(127, 90, 240, 0.3); border-radius: 24px; padding: 2rem 2.5rem; margin-bottom: 3rem; backdrop-filter: blur(16px);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+          <span style="background: rgba(44, 182, 125, 0.2); color: #2cb67d; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 999px; letter-spacing: 0.05em;">🚀 1-Minute Deployment</span>
+          <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 0.4rem;">Deploy DIAD Agent on Your Computer</h2>
+        </div>
+        <a href="/setup.bat" download style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-cyan), #249e6b); color: #000; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 12px; text-decoration: none; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(44, 182, 125, 0.4);">
+          ⚡ Download 1-Click Windows Installer (.bat)
+        </a>
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">
+        Copy the command below into PowerShell, or click the installer button above. The setup engine will download your encrypted release package, configure dependencies, and open your Onboarding Dashboard at <strong>http://localhost:8000</strong>.
+      </p>
+
+      <!-- Terminal Command Copy Box -->
+      <div style="background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+        <code id="setup-cmd" style="font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85rem; color: #38bdf8; word-break: break-all; flex: 1;">
+          iwr "https://diad.d4e.ai/DIAD_release_v1.0.zip" -OutFile "$env:TEMP\DIAD.zip"; Expand-Archive "$env:TEMP\DIAD.zip" -DestinationPath "$home\DIAD" -Force; Remove-Item "$env:TEMP\DIAD.zip"; cd "$home\DIAD"; .\setup.ps1
+        </code>
+        <button onclick="copySetupCommand()" style="background: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-hover)); border: none; color: white; font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; transition: all 0.2s ease;">
+          📋 Copy Command
+        </button>
+      </div>
+      <div id="copy-toast" style="display: none; color: var(--accent-cyan); font-size: 0.82rem; margin-top: 0.6rem; font-weight: 500;">
+        ✓ Copied to clipboard! Open PowerShell and press Enter to launch.
+      </div>
+    </section>
+
+    <section class="hero">
+      <h2>Select Your AI Workspace</h2>
+      <p>Access customer support assistance or internal business intelligence powered by your Google Cloud warehouse and vector database.</p>
+    </section>
+
+    <div class="cards-grid">
+      <!-- External Customer Chatbot -->
+      <div class="card external">
+        <div>
+          <div class="card-icon">🛍️</div>
+          <h3 class="card-title">Customer Support Assistant</h3>
+          <p class="card-description">
+            Public chatbot for customers to query order statuses, tracking updates, return policies, and store FAQs.
+          </p>
+          <ul class="features-list">
+            <li>Instant order status & tracking dossier lookup</li>
+            <li>Public FAQ & Return Policy knowledge base</li>
+            <li>Automatic PII & sensitive data masking</li>
+            <li>24/7 self-serve customer assistant</li>
+          </ul>
+        </div>
+        <a href="/external_chatbot" class="btn">Launch Customer Chatbot →</a>
+      </div>
+
+      <!-- Internal Admin Chatbot -->
+      <div class="card internal">
+        <div>
+          <div class="card-icon">📊</div>
+          <h3 class="card-title">Internal Executive Advisor</h3>
+          <p class="card-description">
+            Private business intelligence chatbot for staff to run text-to-SQL analytics over revenue, orders, and SOPs.
+          </p>
+          <ul class="features-list">
+            <li>Text-to-SQL queries over BigQuery data marts</li>
+            <li>Customer 360 & revenue breakdown insights</li>
+            <li>Access to internal SOPs & private team docs</li>
+            <li>LLM-synthesized executive reporting</li>
+          </ul>
+        </div>
+        <a href="/internal_chatbot" class="btn btn-cyan">Launch Internal Advisor →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Powered by <strong>DIAD Engine</strong> for <strong>{{BUSINESS_NAME}}</strong></p>
+  </footer>
+
+  <script>
+    function copySetupCommand() {
+      const cmdText = document.getElementById('setup-cmd').innerText.trim();
+      navigator.clipboard.writeText(cmdText).then(() => {
+        const toast = document.getElementById('copy-toast');
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 4000);
+      });
+    }
+  </script>
+</body>
+</html>

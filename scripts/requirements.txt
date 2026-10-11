@@ -1,0 +1,8 @@
+google-cloud-bigquery>=3.25.0
+google-cloud-storage>=2.18.2
+pandas>=2.2.2
+pyarrow>=16.1.0
+openai>=1.43.0
+google-genai==0.3.0
+tiktoken>=0.7.0
+pinecone-client>=5.0.1

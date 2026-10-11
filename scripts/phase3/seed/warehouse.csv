@@ -1,0 +1,3 @@
+warehouse_sk,warehouse_code,name,address_json,timezone,created_at,updated_at
+1,SG-01,Singapore Main,"{""city"":""Singapore"",""country"":""SG"",""line1"":""1 HarbourFront""}",Asia/Singapore,2026-05-18 12:00:00,2026-07-16 12:00:00
+2,MY-01,Johor Hub,"{""city"":""Johor Bahru"",""country"":""MY"",""line1"":""1 Nusajaya""}",Asia/Kuala_Lumpur,2026-05-18 12:00:00,2026-07-16 12:00:00

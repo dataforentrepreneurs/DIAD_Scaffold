@@ -1,4 +1,4 @@
-"""
+r"""
 scripts/phase7/7_2_export_order_dossier_json.py
 
 Currently we are not running it because RAG mode is 'direct_bq' – skipping GCS export and Pinecone upsert.

@@ -61,16 +61,35 @@ function Require([string]$name, [string]$val) {
   }
 }
 
-if (-not (Test-Path $ConfigPath)) { throw "Config not found: $ConfigPath" }
+if (-not (Test-Path $ConfigPath)) {
+  if (Test-Path "config/client_rawdata.json.example") {
+    Write-Host ""
+    Write-Host "[WARN] Configuration file not found at '$ConfigPath'." -ForegroundColor Yellow
+    Write-Host "Initializing '$ConfigPath' from 'config/client_rawdata.json.example'..." -ForegroundColor Cyan
+    Copy-Item "config/client_rawdata.json.example" $ConfigPath
+  } else {
+    throw "Config not found: $ConfigPath"
+  }
+}
 $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
 
 $PROJECT    = $cfg.client.project_id
 $REGION     = $cfg.gcp.region
+if (-not $REGION) { $REGION = $cfg.client.bq_location }
+if (-not $REGION) { $REGION = "asia-southeast1" }
+
 $RUNTIME_SA = $cfg.gcp.chatbot_access_sa
 
-Require "client.project_id" $PROJECT
-Require "gcp.region" $REGION
-Require "gcp.chatbot_access_sa" $RUNTIME_SA
+if ([string]::IsNullOrWhiteSpace($PROJECT) -or $PROJECT -eq "Not Configured" -or $PROJECT -eq "YOUR_PROJECT_ID") {
+  Write-Host ""
+  Write-Host "[ERROR] Target GCP Project ID is not configured in '$ConfigPath'." -ForegroundColor Red
+  Write-Host "Please set 'client.project_id' in '$ConfigPath' to your client's GCP Project ID," -ForegroundColor Yellow
+  Write-Host "or launch the Onboarding Wizard to configure it via the web interface:" -ForegroundColor Yellow
+  Write-Host "  python scripts/onboarding_dashboard.py" -ForegroundColor Green
+  Write-Host ""
+  exit 1
+}
+
 Require "SourceDir" $SourceDir
 
 # Allow key_file to come from config if not passed
@@ -79,16 +98,18 @@ if (-not $key_file) {
   if (-not $key_file) { $key_file = $cfg.gcp."key-file" }
 }
 
-if (-not $key_file -or -not (Test-Path $key_file)) {
-  throw "key_file missing. Provide -key_file or set gcp.key_file in config/client_rawdata.json"
-}
-
 # Ensure no impersonation is set
 try { & $GCLOUD config unset auth/impersonate_service_account | Out-Null } catch {}
 Remove-Item Env:CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT -ErrorAction SilentlyContinue
 
 # Auth then set project
-& $GCLOUD auth activate-service-account --key-file "$key_file" | Out-Null
+if ($key_file -and (Test-Path $key_file)) {
+  Write-Host "Activating Service Account key: $key_file"
+  & $GCLOUD auth activate-service-account --key-file "$key_file" | Out-Null
+} else {
+  Write-Host "Using currently active gcloud credentials."
+}
+
 & $GCLOUD config set project $PROJECT | Out-Null
 & $GCLOUD config set run/region $REGION | Out-Null
 
@@ -139,11 +160,13 @@ function Remove-AllUsers-Invoker([string]$service) {
 }
 
 # Runtime SA minimum permissions
-Write-Host ""
-Write-Host "--- Ensure runtime SA permissions (idempotent) ---"
-Grant-ProjectRole $RUNTIME_SA "roles/bigquery.jobUser"
-Grant-ProjectRole $RUNTIME_SA "roles/bigquery.dataViewer"
-Grant-ProjectRole $RUNTIME_SA "roles/secretmanager.secretAccessor"
+if ($RUNTIME_SA) {
+  Write-Host ""
+  Write-Host "--- Ensure runtime SA permissions (idempotent) ---"
+  Grant-ProjectRole $RUNTIME_SA "roles/bigquery.jobUser"
+  Grant-ProjectRole $RUNTIME_SA "roles/bigquery.dataViewer"
+  Grant-ProjectRole $RUNTIME_SA "roles/secretmanager.secretAccessor"
+}
 
 # Common env vars (kept same as your current design)
 # NOTE: This assumes config/ is included in the image (Dockerfile copies repo). If not, we can switch to DIAD_CONFIG_JSON.
@@ -258,17 +281,20 @@ if ($SkipBuild) {
 # Deploy INTERNAL from image
 Write-Host ""
 Write-Host "Deploying INTERNAL..."
-& $GCLOUD run deploy $InternalService `
-  --project=$PROJECT `
-  --region=$REGION `
-  --image $IMAGE `
-  --memory=2Gi `
-  --cpu=1 `
-  --no-allow-unauthenticated `
-  --ingress=$InternalIngress `
-  --service-account=$RUNTIME_SA `
-  --set-env-vars "$commonEnv,APP_MODULE=chatbot.internal_api:app" `
-  --set-secrets ($secrets -join ",")
+$internalArgs = @(
+  "run", "deploy", $InternalService,
+  "--project=$PROJECT",
+  "--region=$REGION",
+  "--image", $IMAGE,
+  "--memory=2Gi",
+  "--cpu=1",
+  "--no-allow-unauthenticated",
+  "--ingress=$InternalIngress",
+  "--set-env-vars", "$commonEnv,APP_MODULE=chatbot.internal_api:app"
+)
+if ($RUNTIME_SA) { $internalArgs += "--service-account=$RUNTIME_SA" }
+if ($secrets.Count -gt 0) { $internalArgs += @("--set-secrets", ($secrets -join ",")) }
+& $GCLOUD @internalArgs
 
 # Ensure internal is not public
 Remove-AllUsers-Invoker $InternalService
@@ -287,31 +313,21 @@ foreach ($p in $InternalInvokers) {
 # Deploy EXTERNAL from same image
 Write-Host ""
 Write-Host "Deploying EXTERNAL..."
-if ($ExternalPublic) {
-  & $GCLOUD run deploy $ExternalService `
-    --project=$PROJECT `
-    --region=$REGION `
-    --image $IMAGE `
-    --memory=2Gi `
-    --cpu=1 `
-    --allow-unauthenticated `
-    --ingress=all `
-    --service-account=$RUNTIME_SA `
-    --set-env-vars "$commonEnv,APP_MODULE=chatbot.external_api:app" `
-    --set-secrets ($secrets -join ",")
-} else {
-  & $GCLOUD run deploy $ExternalService `
-    --project=$PROJECT `
-    --region=$REGION `
-    --image $IMAGE `
-    --memory=2Gi `
-    --cpu=1 `
-    --no-allow-unauthenticated `
-    --ingress=all `
-    --service-account=$RUNTIME_SA `
-    --set-env-vars "$commonEnv,APP_MODULE=chatbot.external_api:app" `
-    --set-secrets ($secrets -join ",")
-}
+$authFlag = if ($ExternalPublic) { "--allow-unauthenticated" } else { "--no-allow-unauthenticated" }
+$externalArgs = @(
+  "run", "deploy", $ExternalService,
+  "--project=$PROJECT",
+  "--region=$REGION",
+  "--image", $IMAGE,
+  "--memory=2Gi",
+  "--cpu=1",
+  $authFlag,
+  "--ingress=all",
+  "--set-env-vars", "$commonEnv,APP_MODULE=chatbot.external_api:app"
+)
+if ($RUNTIME_SA) { $externalArgs += "--service-account=$RUNTIME_SA" }
+if ($secrets.Count -gt 0) { $externalArgs += @("--set-secrets", ($secrets -join ",")) }
+& $GCLOUD @externalArgs
 
 
 Write-Host ""

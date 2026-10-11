@@ -227,6 +227,13 @@ async def favicon():
 # Help endpoints map steps to shell/python execution calls
 def get_config_data():
     if not CONFIG_PATH.exists():
+        example_path = CONFIG_DIR / "client_rawdata.json.example"
+        if example_path.exists():
+            try:
+                with open(example_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
         return {}
     try:
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:

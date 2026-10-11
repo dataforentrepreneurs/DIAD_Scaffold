@@ -183,6 +183,11 @@ foreach ($item in $candidateSecrets) {
 # Build image once (or skip)
 # -----------------------------
 
+if (-not $SkipBuild -and -not (Test-Path (Join-Path $SourceDir "Dockerfile"))) {
+  Write-Host "No local Dockerfile found in $SourceDir (Scaffold mode). Defaulting to pre-built image from ghcr.io."
+  $SkipBuild = $true
+}
+
 if ($SkipBuild) {
   if ($ImageRef) {
     $IMAGE = $ImageRef

@@ -120,45 +120,24 @@ gcloud run services logs read diad-internal-chat --limit=50 --region=asia-southe
 
 ---
 
-## 🧹 Resetting & Re-running Sandbox Demos (The Diamante Collections)
-
-If you are using **The Diamante Collections** (`diamante-diad`) sandbox to pitch prospective clients or record demo videos, you can instantly wipe remote GCP resources and reset local configs with a single command:
-
-```powershell
-.\scripts\reset_diamante_sandbox.ps1 -Force
-```
-
-### What the Reset Script Automatically Wipes:
-- 🗑️ **Cloud Run Services & Jobs**: Deletes `diad-external-chat`, `diad-internal-chat`, and doc sync jobs.
-- 🗑️ **Cloud Scheduler**: Removes `diad-phase8-sync-quarterly` cron triggers.
-- 🗑️ **Secret Manager**: Clears vaulted API keys (`OPENAI_API_KEY`, `PINECONE_API_KEY`, etc.).
-- 🗑️ **BigQuery Datasets**: Force-deletes `ecommerce_raw`, `ecommerce_canonical`, and `ecommerce_mart`.
-- 🗑️ **GCS Storage Objects**: Clears raw landing files in `gs://diamante-diad-storage/`.
-- 🔄 **Local Configuration & Keys**: Resets `config/client_rawdata.json` back to default template, removes local Service Account `.json` keys in `keys/`, and deletes `config/.secrets_synced` flag.
-
-After running the script, launch `python scripts/onboarding_dashboard.py` (or `.\setup.ps1`) to run a 100% clean onboarding pitch from Step 1!
-
----
-
 ## 📦 What's Inside
 
 ```
-DIAD/
-├── setup.ps1                    ← One-click setup script
+DIAD_Scaffold/
+├── setup.ps1                    ← One-click onboarding & environment setup script
 ├── scripts/
-│   ├── onboarding_dashboard.py  ← The onboarding wizard server
-│   ├── 1_*.py                   ← GCP bootstrap scripts
-│   ├── phase3/                  ← Data ingestion pipeline
-│   ├── phase7/                  ← Chatbot data preparation
-│   ├── phase8/                  ← Vector database sync
-│   └── phase9/                  ← Cloud Run deployment
-├── chatbot/
-│   ├── external_api.py          ← Customer-facing chatbot API
-│   └── internal_api.py          ← Admin chatbot API
-├── dbt/                         ← Data transformation models
-├── config/                      ← Project configuration
+│   ├── onboarding_dashboard.py  ← Interactive web wizard (FastAPI + SSE logs)
+│   ├── 1_*.py                   ← GCP bootstrap, IAM, and resource provisioning
+│   ├── 2_*.py                   ← Firestore and Firebase Auth data extraction
+│   ├── 3_*.py                   ← E-commerce catalog & transactional data ingestion
+│   ├── phase3/                  ← BigQuery dataset schemas & seed loaders
+│   ├── phase7/                  ← Order dossier & Customer 360 analytical data pipelines
+│   └── phase9/                  ← Cloud Run deployment (pulls pre-built DIAD engine)
+├── dbt/                         ← dbt SQL transformation models & marts
+├── config/                      ← Configuration templates (client_rawdata.json.example)
 ├── keys/                        ← Service account keys (gitignored)
-└── documentation/               ← Detailed technical guides
+├── web/                         ← Embeddable chat widgets & landing pages
+└── documentation/               ← Architecture guides & setup manuals
 ```
 
 ---

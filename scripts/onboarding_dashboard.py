@@ -1249,11 +1249,11 @@ async def get_dashboard():
                             </a>
                         </div>
                         <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.75rem;">
-                            Exports your store traffic & user behavior data into BigQuery. Make sure you created your GCP Project ID in Tab 1 (e.g. <code><span class="gcp-project-placeholder">diamante-diad3</span></code>). Google Analytics automatically creates the BigQuery dataset inside your project!
+                            Exports your store traffic & user behavior data into BigQuery. Make sure you created your GCP Project ID in Tab 1 (e.g. <code><span class="gcp-project-placeholder">your-gcp-project-id</span></code>). Google Analytics automatically creates the BigQuery dataset inside your project!
                         </p>
                         <ol style="font-size: 0.8rem; color: var(--text-muted); margin-left: 1.25rem; line-height: 1.5;">
                             <li>In the Google Analytics panel, click <strong>Admin (gear icon) → Product Links → BigQuery Links</strong>.</li>
-                            <li>Click <strong>Link</strong>, choose your GCP Project ID (<code><span class="gcp-project-placeholder">diamante-diad3</span></code>), set it to export data daily, and submit.</li>
+                            <li>Click <strong>Link</strong>, choose your GCP Project ID (<code><span class="gcp-project-placeholder">your-gcp-project-id</span></code>), set it to export data daily, and submit.</li>
                         </ol>
                     </div>
 

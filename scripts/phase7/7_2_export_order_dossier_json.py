@@ -131,14 +131,14 @@ def resolve_bucket_and_prefix(cfg: dict) -> tuple[str, str]:
     We allow several shapes, for safety:
 
     {
-      "bucket": "diamante-diad",
+      "bucket": "your-storage-bucket",
       "exports": { "order_dossier_prefix": "exports/order_dossier" }
     }
 
     or:
 
     {
-      "gcs": { "bucket": "diamante-diad" },
+      "gcs": { "bucket": "your-storage-bucket" },
       "exports": { "order_dossier_prefix": "exports/order_dossier" }
     }
 

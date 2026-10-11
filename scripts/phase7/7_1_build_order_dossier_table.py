@@ -175,10 +175,10 @@ def build_bq_client(cfg: dict) -> bigquery.Client:
             "Example config snippet:\n"
             '{\n'
             '  "client": {\n'
-            '    "project_id": "diamante-diad2",\n'
+            '    "project_id": "your-gcp-project-id",\n'
             '    "bq_location": "asia-southeast1",\n'
             '    "gcp": {\n'
-            '      "service_account_key_path": "keys/diad-2-69a14139f02e.json"\n'
+            '      "service_account_key_path": "keys/client-service-account.json"\n'
             '    }\n'
             '  }\n'
             '}\n'

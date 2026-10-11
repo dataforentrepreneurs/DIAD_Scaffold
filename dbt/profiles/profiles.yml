@@ -5,7 +5,7 @@ diabq:
       type: bigquery
       method: service-account
       keyfile: "{{ env_var('KEYFILE_PATH', 'keys/client-service-account.json') }}"
-      project: "{{ env_var('DIAD_PROJECT_ID', 'diamante-diad') }}"
+      project: "{{ env_var('DIAD_PROJECT_ID', 'your-gcp-project-id') }}"
       dataset: ecommerce_canonical
       location: "{{ env_var('BQ_LOCATION', 'asia-southeast1') }}"
       threads: 2

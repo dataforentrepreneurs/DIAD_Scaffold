@@ -1,14 +1,14 @@
 # DIAD Phase 9 — Productionize Chatbots (Internal + External) on Client Project
 
-This phase deploys your **internal** and **external** FastAPI chatbots to **Cloud Run in the client project** using:
-- **Deployer SA** (impersonated by `gcloud`): `chatbot-deploy-clientside@diamante-diad3.iam.gserviceaccount.com`
-- **Runtime SA** (Cloud Run execution identity): `chatbot-access-sources-clients@diamante-diad3.iam.gserviceaccount.com`
+This phase deploys the **internal** and **external** chatbots to **Cloud Run in the client GCP project** using the pre-built DIAD Engine container (`ghcr.io/dataforentrepreneurs/diad-engine:v1.0.0`):
+- **Deployer SA** (impersonated by `gcloud`): `<DEPLOYER_SA>@<PROJECT_ID>.iam.gserviceaccount.com`
+- **Runtime SA** (Cloud Run execution identity): `<RUNTIME_SA>@<PROJECT_ID>.iam.gserviceaccount.com`
 
-Config source of truth: `config/client_rawdata.json` (you uploaded/maintain this per client). fileciteturn0file0
+Config source of truth: `config/client_rawdata.json`
 
 ---
 
-## Folder structure
+## Folder Structure
 
 ```
 scripts/
@@ -24,19 +24,21 @@ scripts/
 
 ## 9.0 Preflight (local)
 
-Checks BigQuery + optionally Pinecone.
+Validates BigQuery datasets, tables, and optional external services.
 
 ```powershell
 python scripts/phase9/9_0_preflight.py --config config/client_rawdata.json
 ```
 
-**Auth options**
+**Auth options:**
 - Recommended: `gcloud auth application-default login`
-- Or set `GOOGLE_APPLICATION_CREDENTIALS` to a keyfile
+- Or provide a Service Account key in `keys/`
 
 ---
 
-## 9.1 Run locally (optional)
+## 9.1 Run locally (Docker)
+
+Runs the pre-built DIAD engine container locally for smoke testing:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/phase9/9_1_run_local.ps1 -ConfigPath config/client_rawdata.json
@@ -44,13 +46,15 @@ powershell -ExecutionPolicy Bypass -File scripts/phase9/9_1_run_local.ps1 -Confi
 
 ---
 
-## 9.2 Deploy to Cloud Run (client project)
+## 9.2 Deploy to Cloud Run (Client Project)
 
 This script:
-- targets client project `diamante-diad3`
-- impersonates deployer SA `chatbot-deploy-clientside@diamante-diad3.iam.gserviceaccount.com`
-- deploys 2 services: `diad-internal-chat`, `diad-external-chat`
-- sets Cloud Run runtime identity to `chatbot-access-sources-clients@diamante-diad3.iam.gserviceaccount.com`
+- Targets the client project defined in `config/client_rawdata.json`
+- Impersonates the deployer Service Account
+- Deploys both services: `diad-internal-chat` and `diad-external-chat`
+- Pulls the pre-built engine container from GitHub Packages
+- Sets the Cloud Run runtime identity to the runtime Service Account
+- Injects required Secret Manager secrets as environment variables
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/phase9/9_2_deploy_cloud_run.ps1 -ConfigPath config/client_rawdata.json
@@ -60,13 +64,15 @@ powershell -ExecutionPolicy Bypass -File scripts/phase9/9_2_deploy_cloud_run.ps1
 
 ## 9.3 Smoke tests
 
+Tests connectivity and health check endpoints on deployed Cloud Run services:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/phase9/9_3_smoke_test.ps1
 ```
 
 Notes:
-- External should return health response (200).
-- Internal is typically private, so unauthenticated smoke test may fail (expected).
+- External service returns a 200 OK health response on `/healthz`.
+- Internal service is typically configured as private/IAM-authenticated, so unauthenticated smoke tests will report status code 401/403 as expected.
 
 ---
 
@@ -76,11 +82,11 @@ Notes:
 You are not impersonating the deployer SA or targeting the wrong project.
 
 Fix:
-- Ensure `gcloud config set project diamante-diad3`
-- Ensure `CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT` is set to `chatbot-deploy-clientside@diamante-diad3.iam.gserviceaccount.com` (the deploy script does this)
+- Ensure `gcloud config set project <PROJECT_ID>`
+- Ensure `CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT` is set to `<DEPLOYER_SA>@<PROJECT_ID>.iam.gserviceaccount.com` (the deploy script handles this automatically if configured)
 
 ### Runtime errors accessing BigQuery / secrets
-Ensure runtime SA `chatbot-access-sources-clients@diamante-diad3.iam.gserviceaccount.com` has:
+Ensure the runtime SA has:
 - `roles/bigquery.jobUser`
 - `roles/bigquery.dataViewer` (or dataset-level)
 - `roles/secretmanager.secretAccessor`

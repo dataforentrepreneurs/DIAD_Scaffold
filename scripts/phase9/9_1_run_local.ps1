@@ -29,13 +29,18 @@ if (Test-Path $envFile) {
 }
 
 
-Write-Host "Starting INTERNAL API on port $InternalPort ..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", ".\venv_dbt\Scripts\python.exe -m uvicorn chatbot.internal_api:app --reload --port $InternalPort"
+if (Test-Path "chatbot\internal_api.py") {
+  Write-Host "Starting INTERNAL API on port $InternalPort ..."
+  Start-Process powershell -ArgumentList "-NoExit", "-Command", "python -m uvicorn chatbot.internal_api:app --reload --port $InternalPort"
 
-Write-Host "Starting EXTERNAL API on port $ExternalPort ..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", ".\venv_dbt\Scripts\python.exe -m uvicorn chatbot.external_api:app --reload --port $ExternalPort"
+  Write-Host "Starting EXTERNAL API on port $ExternalPort ..."
+  Start-Process powershell -ArgumentList "-NoExit", "-Command", "python -m uvicorn chatbot.external_api:app --reload --port $ExternalPort"
 
-Write-Host ""
-Write-Host "Started. Test:"
-Write-Host " - http://127.0.0.1:$InternalPort/docs"
-Write-Host " - http://127.0.0.1:$ExternalPort/docs"
+  Write-Host ""
+  Write-Host "Started. Test:"
+  Write-Host " - http://127.0.0.1:$InternalPort/docs"
+  Write-Host " - http://127.0.0.1:$ExternalPort/docs"
+} else {
+  Write-Host "Scaffold mode: Running pre-built DIAD Engine container from ghcr.io on port $ExternalPort..."
+  docker run --rm -it -p "${ExternalPort}:8080" -e "DIAD_CONFIG=$ConfigPath" -v "${PWD}/config:/app/config" ghcr.io/dataforentrepreneurs/diad-engine:latest
+}

@@ -183,39 +183,47 @@ if ($insideRepo) {
     } else {
         $downloaded = $false
         if ([string]::IsNullOrWhiteSpace($ZipUrl) -and (Test-Command "git")) {
-            Write-Info "Attempting repository clone..."
+            Write-Info "Attempting repository clone from GitHub..."
+            $oldEAP = $ErrorActionPreference
+            $ErrorActionPreference = "SilentlyContinue"
             git clone https://github.com/dataforentrepreneurs/DIAD_Scaffold.git $InstallDir 2>&1 | ForEach-Object { Write-Info $_ }
             $ErrorActionPreference = $oldEAP
-            if ($LASTEXITCODE -ne 0) {
-                # Fallback to DIAD_Agent if DIAD_Scaffold not yet published
-                $ErrorActionPreference = "SilentlyContinue"
-                git clone https://github.com/dataforentrepreneurs/DIAD_Agent.git $InstallDir 2>&1 | ForEach-Object { Write-Info $_ }
-                $ErrorActionPreference = $oldEAP
-            }
-            if ($LASTEXITCODE -eq 0) {
+            if ($LASTEXITCODE -eq 0 -and (Test-Path $repoDir)) {
                 $downloaded = $true
                 Write-Ok "Repository cloned to: $repoDir"
             }
         }
 
         if (-not $downloaded) {
-            $targetUrl = $ZipUrl
-            if ([string]::IsNullOrWhiteSpace($targetUrl)) {
-                Write-Err "Git clone failed or repository is private."
-                Write-Info "If you have a direct ZIP download URL (from GitShare), re-run with:"
-                Write-Info "  .\setup.ps1 -ZipUrl `"<your-download-link>`""
-                exit 1
-            }
-
-            Write-Info "Downloading project from ZIP URL..."
+            $targetUrl = if (-not [string]::IsNullOrWhiteSpace($ZipUrl)) { $ZipUrl } else { "https://github.com/dataforentrepreneurs/DIAD_Scaffold/archive/refs/heads/main.zip" }
+            Write-Info "Downloading DIAD Scaffold archive from: $targetUrl ..."
             $zipPath = Join-Path (Get-Location) "DIAD_temp.zip"
             $oldEAP = $ErrorActionPreference
             $ErrorActionPreference = "SilentlyContinue"
-            Invoke-WebRequest -Uri $targetUrl -OutFile $zipPath
-            $ErrorActionPreference = $oldEAP
-            Expand-Archive -Path $zipPath -DestinationPath (Get-Location) -Force
-            Remove-Item $zipPath -Force
-            Write-Ok "Project downloaded and extracted."
+            try {
+                Invoke-WebRequest -Uri $targetUrl -OutFile $zipPath -UseBasicParsing
+                $ErrorActionPreference = $oldEAP
+                Write-Info "Extracting archive..."
+                $extractTemp = Join-Path (Get-Location) "DIAD_extract_temp"
+                if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force }
+                Expand-Archive -Path $zipPath -DestinationPath $extractTemp -Force
+                Remove-Item $zipPath -Force
+
+                # GitHub ZIPs create a root folder like DIAD_Scaffold-main
+                $nested = Get-ChildItem -Path $extractTemp -Directory | Select-Object -First 1
+                if ($nested -and (Test-Path (Join-Path $nested.FullName "scripts"))) {
+                    Move-Item -Path $nested.FullName -Destination $repoDir -Force
+                } else {
+                    Move-Item -Path $extractTemp -Destination $repoDir -Force
+                }
+                if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force -ErrorAction SilentlyContinue }
+                $downloaded = $true
+                Write-Ok "Project archive downloaded and extracted to: $repoDir"
+            } catch {
+                $ErrorActionPreference = $oldEAP
+                Write-Err "Download/extraction failed: $_"
+                exit 1
+            }
         }
     }
     # Move into the project directory for remaining steps

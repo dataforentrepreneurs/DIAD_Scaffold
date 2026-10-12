@@ -44,15 +44,17 @@ Write-Host "`n[1/2] External health check..."
 $targetUrl = $null
 $urlsToTry = @($externalUrl, $altExternalUrl) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
 
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+
 foreach ($u in $urlsToTry) {
   try {
     Write-Host "Checking: $u"
-    $res = irm "$u/" -TimeoutSec 10
+    $res = irm "$u/" -TimeoutSec 30
     $targetUrl = $u
     Write-Host "External OK ($targetUrl)"
     break
   } catch {
-    Write-Host "Failed to reach $u"
+    Write-Host "Failed to reach $u : $_"
   }
 }
 

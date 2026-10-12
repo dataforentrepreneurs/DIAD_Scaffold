@@ -100,7 +100,7 @@ function Sync-SchedulerJob {
         --oauth-service-account-email "$SchedulerSA" `
         --oauth-token-scope "https://www.googleapis.com/auth/cloud-platform" `
         --message-body "$Body" `
-        --headers "Content-Type=application/json" | Out-Null
+        --update-headers "Content-Type=application/json" | Out-Null
     }
     Write-Host "  ✅ [$JobName] ACTIVE -> Schedule: '$Cron' ($Tz)" -ForegroundColor Green
   } else {

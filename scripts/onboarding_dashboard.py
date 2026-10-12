@@ -471,9 +471,9 @@ async def get_dashboard():
             border: none;
             color: var(--text-muted);
             font-family: 'Outfit', sans-serif;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            padding: 0.45rem 0.65rem;
+            padding: 0.4rem 0.55rem;
             white-space: nowrap;
             flex-shrink: 0;
             cursor: pointer;
@@ -1578,10 +1578,8 @@ async def get_dashboard():
                     </div>
                 </div>
             </div>
-        </section>
 
-
-                    <!-- TAB 6: SYNC CADENCE & SCHEDULES -->
+            <!-- TAB 6: SYNC CADENCE & SCHEDULES -->
             <div id="schedules-tab" class="tab-content">
                 <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 24, 39, 0.95), rgba(24, 16, 47, 0.95)); border: 1px solid rgba(127, 90, 240, 0.3);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
@@ -1594,7 +1592,7 @@ async def get_dashboard():
                         </div>
                         <div style="text-align: right;">
                             <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Target Project</span>
-                            <span class="badge badge-success" id="sched-project-display" style="font-size: 0.8rem;">diamante-diad</span>
+                            <span class="badge badge-success gcp-project-placeholder" id="sched-project-display" style="font-size: 0.8rem;">{project_id}</span>
                         </div>
                     </div>
 
@@ -1748,6 +1746,8 @@ async def get_dashboard():
                     </div>
                 </div>
             </div>
+            </div>
+        </section>
 
         <!-- RIGHT PANEL: Onboarding Mentor & Output Logs -->
         <section class="panel" style="display: flex; flex-direction: column; gap: 1rem; height: calc(100vh - 140px);">

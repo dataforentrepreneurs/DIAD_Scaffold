@@ -170,11 +170,17 @@ if ($RUNTIME_SA) {
 
 # Common env vars (kept same as your current design)
 # NOTE: This assumes config/ is included in the image (Dockerfile copies repo). If not, we can switch to DIAD_CONFIG_JSON.
-$commonEnv = @(
+$envList = @(
   "DIAD_CONFIG=$ConfigPath",
   "DIAD_PROJECT_ID=$PROJECT",
   "DIAD_REGION=$REGION"
-) -join ","
+)
+$idxName = $cfg.document_rag.index_name
+if (-not $idxName -or $idxName -eq "YOUR_PINECONE_INDEX_NAME") {
+  $idxName = "diad-docs-index"
+}
+$envList += "PINECONE_INDEX_NAME=$idxName"
+$commonEnv = $envList -join ","
 
 # Dynamic Secrets mapping (Secret Manager -> env var)
 $gcloudSecrets = (& $GCLOUD secrets list --project $PROJECT --format="value(name)")
@@ -352,7 +358,7 @@ if (Test-Path $cfgFile) {
     $cfg | ConvertTo-Json -Depth 10 | Set-Content $cfgFile -Encoding UTF8
     Write-Host "Auto-configured $cfgFile with external_api_url ($extUrl)"
   } catch {
-    Write-Host "Notice: Could not auto-update $cfgFile: $_"
+    Write-Host "Notice: Could not auto-update ${cfgFile} - $_"
   }
 }
 

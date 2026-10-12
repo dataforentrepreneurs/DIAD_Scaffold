@@ -279,6 +279,9 @@ class KeyUploadPayload(BaseModel):
 class MentorChatPayload(BaseModel):
     question: str
 
+class ScheduleUpdatePayload(BaseModel):
+    schedules: dict
+
 @app.get("/", response_class=HTMLResponse)
 async def get_dashboard():
     # Read the current config to inject some state if needed
@@ -956,6 +959,7 @@ async def get_dashboard():
                 <button class="tab-btn" id="tab-btn-secrets" onclick="switchTab('secrets-tab')">3. Store Analytics</button>
                 <button class="tab-btn" id="tab-btn-pipeline" onclick="switchTab('pipeline-tab')">4. Onboarding Pipeline</button>
                 <button class="tab-btn" id="tab-btn-package" onclick="switchTab('package-tab')">5. Client Web Package</button>
+                    <button class="tab-btn" id="tab-btn-schedules" onclick="switchTab('schedules-tab')">6. Sync Cadence & Schedules</button>
             </div>
 
             
@@ -1577,6 +1581,174 @@ async def get_dashboard():
         </section>
 
 
+                    <!-- TAB 6: SYNC CADENCE & SCHEDULES -->
+            <div id="schedules-tab" class="tab-content">
+                <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 24, 39, 0.95), rgba(24, 16, 47, 0.95)); border: 1px solid rgba(127, 90, 240, 0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div>
+                            <span class="badge" style="background: rgba(127, 90, 240, 0.2); color: #c084fc; border: 1px solid rgba(127, 90, 240, 0.4); margin-bottom: 0.5rem; display: inline-block;">Automated Cadence Manager</span>
+                            <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem;">Recurring Data & Knowledge Base Sync</h2>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">
+                                Distinguish between <strong>Day 1 Initial Backfill</strong> (historical ingest executed in Tab 4) and <strong>Day 2+ Recurring Cadences</strong>. Automated Cloud Schedulers trigger incremental updates directly into BigQuery and Pinecone.
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Target Project</span>
+                            <span class="badge badge-success" id="sched-project-display" style="font-size: 0.8rem;">diamante-diad</span>
+                        </div>
+                    </div>
+
+                    <!-- Global Timezone Picker -->
+                    <div style="display: flex; gap: 1rem; align-items: center; background: rgba(0, 0, 0, 0.25); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 1.25rem;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">🌐 Cadence Timezone:</span>
+                        <select id="sched_timezone" class="form-control" style="max-width: 260px; font-size: 0.85rem; padding: 0.35rem 0.6rem;">
+                            <option value="Asia/Singapore">Asia/Singapore (UTC+8)</option>
+                            <option value="America/New_York">America/New_York (UTC-5/EDT)</option>
+                            <option value="America/Los_Angeles">America/Los_Angeles (UTC-8/PDT)</option>
+                            <option value="Europe/London">Europe/London (UTC+0/BST)</option>
+                            <option value="UTC">UTC (Coordinated Universal Time)</option>
+                        </select>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">All cron timers execute according to this timezone.</span>
+                    </div>
+
+                    <!-- Cadence Grid: Ecommerce & Docs -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <!-- Card 1: Ecommerce Data -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">🛒</span>
+                                    <h3 style="font-size: 1.05rem; font-weight: 600; color: #fff;">E-Commerce Pipeline</h3>
+                                </div>
+                                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem;">
+                                    <input type="checkbox" id="sched_ecom_enabled" checked style="accent-color: var(--accent-purple);">
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                            <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
+                                Synchronizes recent Shopify/WooCommerce orders, inventory changes, and rebuilds dbt analytical marts (Customer 360 & Order Dossiers).
+                            </p>
+                            <div class="form-group" style="margin-bottom: 0.75rem;">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Cadence Frequency</label>
+                                <select id="sched_ecom_frequency" class="form-control" onchange="onFrequencyChange('sched_ecom', this.value)" style="font-size: 0.82rem; padding: 0.35rem 0.6rem;">
+                                    <option value="0 2 * * *">Daily at 2:00 AM (Recommended)</option>
+                                    <option value="0 */6 * * *">Every 6 Hours</option>
+                                    <option value="0 * * * *">Hourly</option>
+                                    <option value="custom">Custom Cron Expression...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="sched_ecom_cron_group" style="margin-bottom: 0.75rem;">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Cron Expression</label>
+                                <input type="text" id="sched_ecom_cron" class="form-control" value="0 2 * * *" style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Incremental Lookback Window (Days)</label>
+                                <input type="number" id="sched_ecom_days" class="form-control" value="7" min="1" max="90" style="font-size: 0.82rem; max-width: 120px;">
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Safety buffer to catch updated order statuses or refunds.</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Knowledge Base Documents -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <span style="font-size: 1.2rem;">📄</span>
+                                <h3 style="font-size: 1.05rem; font-weight: 600; color: #fff;">Knowledge Base & Docs</h3>
+                            </div>
+                            <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.4;">
+                                Incremental crawlers detect SHA-256 content hashes, only re-embedding modified or new documents to conserve API tokens.
+                            </p>
+
+                            <!-- Source 1: Google Drive -->
+                            <div style="background: rgba(0, 0, 0, 0.2); padding: 0.6rem 0.75rem; border-radius: 6px; margin-bottom: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.04);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">📁 Google Drive</span>
+                                    <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer; font-size: 0.75rem;">
+                                        <input type="checkbox" id="sched_gdrive_enabled" checked style="accent-color: var(--accent-purple);">
+                                        <span>Active</span>
+                                    </label>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem;">
+                                    <input type="text" id="sched_gdrive_cron" class="form-control" value="0 3 * * *" placeholder="Cron" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; flex: 1;">
+                                    <span style="font-size: 0.72rem; color: var(--text-muted);">Daily 3 AM</span>
+                                </div>
+                            </div>
+
+                            <!-- Source 2: Confluence -->
+                            <div style="background: rgba(0, 0, 0, 0.2); padding: 0.6rem 0.75rem; border-radius: 6px; margin-bottom: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.04);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">📘 Confluence</span>
+                                    <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer; font-size: 0.75rem;">
+                                        <input type="checkbox" id="sched_confluence_enabled" checked style="accent-color: var(--accent-purple);">
+                                        <span>Active</span>
+                                    </label>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem;">
+                                    <input type="text" id="sched_confluence_cron" class="form-control" value="0 3 * * 0" placeholder="Cron" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; flex: 1;">
+                                    <span style="font-size: 0.72rem; color: var(--text-muted);">Weekly Sun 3 AM</span>
+                                </div>
+                            </div>
+
+                            <!-- Source 3: Notion -->
+                            <div style="background: rgba(0, 0, 0, 0.2); padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.04);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">📓 Notion</span>
+                                    <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer; font-size: 0.75rem;">
+                                        <input type="checkbox" id="sched_notion_enabled" checked style="accent-color: var(--accent-purple);">
+                                        <span>Active</span>
+                                    </label>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem;">
+                                    <input type="text" id="sched_notion_cron" class="form-control" value="0 4 * * 0" placeholder="Cron" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; flex: 1;">
+                                    <span style="font-size: 0.72rem; color: var(--text-muted);">Weekly Sun 4 AM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live GCP Cloud Schedulers Table -->
+                    <div style="margin-bottom: 1.5rem; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h4 style="font-size: 0.9rem; font-weight: 600; color: #fff;">Live Cloud Scheduler Jobs (Google Cloud)</h4>
+                            <button type="button" class="btn" onclick="fetchLiveSchedules()" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: rgba(255, 255, 255, 0.1);">↻ Refresh Status</button>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted);">
+                                    <th style="padding: 0.5rem;">Job Name</th>
+                                    <th style="padding: 0.5rem;">Schedule (Cron)</th>
+                                    <th style="padding: 0.5rem;">Timezone</th>
+                                    <th style="padding: 0.5rem;">Target Job</th>
+                                    <th style="padding: 0.5rem;">State</th>
+                                </tr>
+                            </thead>
+                            <tbody id="live-schedules-tbody">
+                                <tr>
+                                    <td colspan="5" style="padding: 1rem; text-align: center; color: var(--text-muted);">Loading live Cloud Scheduler status...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+                        <button type="button" class="btn" onclick="saveSchedulesConfig()" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b0f19; font-weight: 700;">
+                            💾 Save Cadence Configuration
+                        </button>
+                        <button type="button" class="btn" onclick="deploySchedulesToGCP()" style="background: linear-gradient(135deg, #7f5af0, #2cb67d); color: #fff; font-weight: 700;">
+                            🚀 Deploy Schedules to Google Cloud
+                        </button>
+                        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                            <button type="button" class="btn" onclick="runManualSync('ecommerce')" style="background: rgba(255, 255, 255, 0.08); font-size: 0.78rem;">
+                                ⚡ Run Ecommerce Sync Now
+                            </button>
+                            <button type="button" class="btn" onclick="runManualSync('docs')" style="background: rgba(255, 255, 255, 0.08); font-size: 0.78rem;">
+                                ⚡ Run Docs Sync Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         <!-- RIGHT PANEL: Onboarding Mentor & Output Logs -->
         <section class="panel" style="display: flex; flex-direction: column; gap: 1rem; height: calc(100vh - 140px);">
             <!-- Mentoring Assistant Card -->
@@ -1632,6 +1804,142 @@ async def get_dashboard():
         let fullConfig = {{}};
         let activeEventSource = null;
         
+                // ==========================================
+        // Tab 6: Cadence & Schedule Management
+        // ==========================================
+        function onFrequencyChange(prefix, val) {{
+            const cronInput = document.getElementById(prefix + '_cron');
+            if (val !== 'custom' && cronInput) {{
+                cronInput.value = val;
+            }}
+        }}
+
+        function populateSchedulesUI(sched) {{
+            if (!sched) return;
+            if (sched.timezone && document.getElementById('sched_timezone')) {{
+                document.getElementById('sched_timezone').value = sched.timezone;
+            }}
+            const ecom = sched.ecommerce_pipeline || {{}};
+            if (document.getElementById('sched_ecom_enabled')) {{
+                document.getElementById('sched_ecom_enabled').checked = (ecom.enabled !== false);
+            }}
+            if (document.getElementById('sched_ecom_cron') && ecom.cron) {{
+                document.getElementById('sched_ecom_cron').value = ecom.cron;
+            }}
+            if (document.getElementById('sched_ecom_days') && ecom.incremental_window_days) {{
+                document.getElementById('sched_ecom_days').value = ecom.incremental_window_days;
+            }}
+            const kb = sched.knowledge_base || {{}};
+            if (kb.gdrive) {{
+                if (document.getElementById('sched_gdrive_enabled')) {{
+                    document.getElementById('sched_gdrive_enabled').checked = (kb.gdrive.enabled !== false);
+                }}
+                if (document.getElementById('sched_gdrive_cron') && kb.gdrive.cron) {{
+                    document.getElementById('sched_gdrive_cron').value = kb.gdrive.cron;
+                }}
+            }}
+            if (kb.confluence) {{
+                if (document.getElementById('sched_confluence_enabled')) {{
+                    document.getElementById('sched_confluence_enabled').checked = (kb.confluence.enabled !== false);
+                }}
+                if (document.getElementById('sched_confluence_cron') && kb.confluence.cron) {{
+                    document.getElementById('sched_confluence_cron').value = kb.confluence.cron;
+                }}
+            }}
+            if (kb.notion) {{
+                if (document.getElementById('sched_notion_enabled')) {{
+                    document.getElementById('sched_notion_enabled').checked = (kb.notion.enabled !== false);
+                }}
+                if (document.getElementById('sched_notion_cron') && kb.notion.cron) {{
+                    document.getElementById('sched_notion_cron').value = kb.notion.cron;
+                }}
+            }}
+        }}
+
+        async function fetchLiveSchedules() {{
+            const tbody = document.getElementById('live-schedules-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 1rem; text-align: center; color: var(--text-muted);">Querying Google Cloud Scheduler...</td></tr>';
+            try {{
+                const res = await fetch('/api/schedules');
+                if (!res.ok) throw new Error("Could not fetch schedules");
+                const data = await res.json();
+                if (data.config) {{
+                    populateSchedulesUI(data.config);
+                }}
+                const jobs = data.live_jobs || [];
+                if (jobs.length === 0) {{
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 1rem; text-align: center; color: var(--text-muted);">No Cloud Scheduler jobs active yet. Click "Deploy Schedules to Google Cloud" below to initialize.</td></tr>';
+                }} else {{
+                    tbody.innerHTML = jobs.map(j => `
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                            <td style="padding: 0.5rem; font-family: \'JetBrains Mono\', monospace; color: #fff;">${{j.name}}</td>
+                            <td style="padding: 0.5rem; font-family: \'JetBrains Mono\', monospace; color: #00f2fe;">${{j.schedule}}</td>
+                            <td style="padding: 0.5rem; color: var(--text-muted);">${{j.time_zone}}</td>
+                            <td style="padding: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">diad-sync-pipeline</td>
+                            <td style="padding: 0.5rem;">
+                                <span class="badge ${{j.state === 'ENABLED' ? 'badge-success' : 'badge-warning'}}">${{j.state}}</span>
+                            </td>
+                        </tr>
+                    `).join('');
+                }}
+            }} catch(err) {{
+                tbody.innerHTML = `<tr><td colspan="5" style="padding: 1rem; text-align: center; color: var(--error);">Error loading Cloud Schedulers: ${{err.message}}</td></tr>`;
+            }}
+        }}
+
+        async function saveSchedulesConfig() {{
+            const schedulesObj = {{
+                timezone: document.getElementById('sched_timezone').value,
+                ecommerce_pipeline: {{
+                    enabled: document.getElementById('sched_ecom_enabled').checked,
+                    cron: document.getElementById('sched_ecom_cron').value,
+                    incremental_window_days: parseInt(document.getElementById('sched_ecom_days').value, 10) || 7
+                }},
+                knowledge_base: {{
+                    gdrive: {{
+                        enabled: document.getElementById('sched_gdrive_enabled').checked,
+                        cron: document.getElementById('sched_gdrive_cron').value,
+                        incremental_mode: "hash_change_detection"
+                    }},
+                    confluence: {{
+                        enabled: document.getElementById('sched_confluence_enabled').checked,
+                        cron: document.getElementById('sched_confluence_cron').value,
+                        spaces: fullConfig.schedules?.knowledge_base?.confluence?.spaces || []
+                    }},
+                    notion: {{
+                        enabled: document.getElementById('sched_notion_enabled').checked,
+                        cron: document.getElementById('sched_notion_cron').value,
+                        databases: fullConfig.schedules?.knowledge_base?.notion?.databases || []
+                    }}
+                }}
+            }};
+
+            try {{
+                const res = await fetch('/api/schedules', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ schedules: schedulesObj }})
+                }});
+                if (!res.ok) throw new Error("Failed to save schedule settings");
+                fullConfig.schedules = schedulesObj;
+                showToast("Cadence schedule configuration saved!", "success");
+            }} catch(err) {{
+                showToast(err.message, "error");
+            }}
+        }}
+
+        function deploySchedulesToGCP() {{
+            showToast("Deploying Cloud Scheduler jobs to Google Cloud...", "info");
+            runStep('schedule-sync');
+            setTimeout(fetchLiveSchedules, 8000);
+        }}
+
+        function runManualSync(type) {{
+            showToast(`Triggering manual ${type} sync...`, "info");
+            runStep(`manual-sync-${type}`);
+        }}
+
         // Guidance State Tracker
         let onboardingState = 'init'; // 'init', 'link_sources', 'secrets', 'step_1', 'step_2', 'step_4', 'step_5', 'step_6', 'step_7', 'step_8', 'complete', 'error'
         let stepStates = {{ 1: 'idle', 2: 'idle', 3: 'idle', 4: 'idle', 5: 'idle', 6: 'idle', 7: 'idle', 8: 'idle' }};
@@ -1988,6 +2296,8 @@ async def get_dashboard():
                 document.querySelectorAll('.gcp-project-placeholder').forEach(el => el.textContent = projId);
                 
                 showToast("Configuration loaded successfully", "success");
+                if (data.schedules) populateSchedulesUI(data.schedules);
+                fetchLiveSchedules();
                 
                 // Set onboarding state
                 if (data.client?.project_id && data.client?.project_id !== 'Not Configured' && data.client?.project_id !== 'your-gcp-project-id') {{
@@ -2698,6 +3008,49 @@ async def upsert_secrets(payload: SecretsPayload):
 
     return StreamingResponse(sse_secret_generator(), media_type="text/event-stream")
 
+@app.get("/api/schedules")
+async def get_schedules_api():
+    cfg = get_config_data()
+    schedules = cfg.get("schedules", {})
+    project_id = cfg.get("client", {}).get("project_id", "")
+
+    live_jobs = []
+    gcloud_path = shutil.which("gcloud") or shutil.which("gcloud.cmd")
+    if gcloud_path and project_id and project_id not in ["Not Configured", "your-gcp-project-id", "YOUR_PROJECT_ID"]:
+        try:
+            res = subprocess.run(
+                [gcloud_path, "scheduler", "jobs", "list", "--location=asia-southeast1", f"--project={project_id}", "--format=json"],
+                capture_output=True, text=True, timeout=12
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                jobs_raw = json.loads(res.stdout)
+                for j in jobs_raw:
+                    name_full = j.get("name", "")
+                    job_short = name_full.split("/")[-1] if "/" in name_full else name_full
+                    live_jobs.append({
+                        "name": job_short,
+                        "schedule": j.get("schedule", ""),
+                        "time_zone": j.get("timeZone", ""),
+                        "state": j.get("state", "UNKNOWN"),
+                        "target": "diad-sync-pipeline"
+                    })
+        except Exception as e:
+            print(f"Error querying live scheduler jobs: {e}")
+
+    return {
+        "config": schedules,
+        "live_jobs": live_jobs
+    }
+
+@app.post("/api/schedules")
+async def save_schedules_api(payload: ScheduleUpdatePayload):
+    cfg = get_config_data()
+    cfg["schedules"] = payload.schedules
+    success = save_config_data(cfg)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save schedule configuration")
+    return {"status": "success", "schedules": cfg["schedules"]}
+
 @app.post("/api/mentor_chat")
 async def mentor_chat(payload: MentorChatPayload):
     q = payload.question.lower().strip()
@@ -2818,8 +3171,26 @@ async def run_onboarding_step(step: str):
         steps_to_run = [("Step 6: Build Consolidated E-Commerce Models", f'"{python_bin}" scripts/2_3_build_consolidated.py')]
     elif step in ["ingest-ecommerce", "deploy-chatbots"]:
         steps_to_run = [("Step 7: Ingest E-Commerce & Knowledge Base", f'"{python_bin}" scripts/3_1_ingest_ecommerce.py')]
-    elif step in ["run-dbt", "schedule-sync", "smoke-test"]:
+    elif step in ["run-dbt"]:
         steps_to_run = [("Step 8: Run dbt Analytical Models", f'"{python_bin}" scripts/6_1_run_dbt.py')]
+    elif step in ["schedule-sync", "deploy-schedules"]:
+        sched_script = ROOT_DIR / "scripts" / "phase9" / "client_jobs" / "5_schedule_job.ps1"
+        steps_to_run = [("Deploying Cloud Scheduler Cadences", f'powershell -ExecutionPolicy Bypass -File "{sched_script}"')]
+    elif step in ["deploy-sync-job"]:
+        job_script = ROOT_DIR / "scripts" / "phase9" / "client_jobs" / "4_deploy_job.ps1"
+        steps_to_run = [("Deploying Cloud Run Sync Job Container", f'powershell -ExecutionPolicy Bypass -File "{job_script}"')]
+    elif step in ["smoke-test"]:
+        smoke_script = ROOT_DIR / "scripts" / "phase9" / "9_3_smoke_test.ps1"
+        steps_to_run = [("Running End-to-End System Smoke Test", f'powershell -ExecutionPolicy Bypass -File "{smoke_script}"')]
+    elif step == "manual-sync-ecommerce":
+        sync_runner = ROOT_DIR / "scripts" / "run_sync_job.py"
+        steps_to_run = [("Manual Ecommerce & Marts Sync", f'"{python_bin}" "{sync_runner}" --task ecommerce')]
+    elif step == "manual-sync-docs":
+        sync_runner = ROOT_DIR / "scripts" / "run_sync_job.py"
+        steps_to_run = [("Manual Knowledge Base Docs Sync", f'"{python_bin}" "{sync_runner}" --task docs --source all --incremental')]
+    elif step == "manual-sync-all":
+        sync_runner = ROOT_DIR / "scripts" / "run_sync_job.py"
+        steps_to_run = [("Manual Full Pipeline Sync", f'"{python_bin}" "{sync_runner}" --task all --incremental')]
     else:
         raise HTTPException(status_code=400, detail="Invalid step name")
 

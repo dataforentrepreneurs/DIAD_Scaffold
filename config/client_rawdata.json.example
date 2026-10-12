@@ -146,5 +146,35 @@
     "created_by": "YOUR_NAME",
     "created_date": "2026-07-17",
     "environment": "production"
+  },
+  "schedules": {
+    "timezone": "Asia/Singapore",
+    "ecommerce_pipeline": {
+      "enabled": true,
+      "cadence": "daily",
+      "cron": "0 2 * * *",
+      "description": "Daily sync of orders, payments, shipments into BigQuery & dbt marts"
+    },
+    "knowledge_base": {
+      "confluence": {
+        "enabled": true,
+        "cadence": "weekly",
+        "cron": "0 3 * * 0",
+        "description": "Weekly sync of internal SOPs & handbooks"
+      },
+      "notion": {
+        "enabled": true,
+        "cadence": "weekly",
+        "cron": "0 4 * * 0",
+        "description": "Weekly sync of product specs & brand docs"
+      },
+      "gdrive": {
+        "enabled": true,
+        "cadence": "daily",
+        "cron": "0 3 * * *",
+        "mode": "incremental",
+        "description": "Daily poll on file modifiedTime for updated return policies & logistics sheets"
+      }
+    }
   }
 }

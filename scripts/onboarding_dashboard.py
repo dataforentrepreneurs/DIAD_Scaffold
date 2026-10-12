@@ -425,12 +425,13 @@ async def get_dashboard():
             border: 1px solid var(--card-border);
             box-shadow: var(--card-shadow);
             backdrop-filter: blur(12px);
-            padding: 2rem;
+            padding: 1.25rem 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            height: calc(100vh - 180px);
-            min-height: 600px;
+            gap: 0.75rem;
+            height: calc(100vh - 140px);
+            min-height: 620px;
+            box-sizing: border-box;
             position: sticky;
             top: 100px;
         }}
@@ -458,43 +459,63 @@ async def get_dashboard():
 
         .tabs-header {{
             display: flex;
-            gap: 0.2rem;
-            border-bottom: 1px solid var(--card-border);
-            padding-bottom: 0.75rem;
-            flex-wrap: nowrap;
+            align-items: center;
+            gap: 6px;
+            background: rgba(10, 15, 29, 0.85);
+            padding: 6px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
             overflow-x: auto;
+            overflow-y: hidden;
             scrollbar-width: none;
+            flex-shrink: 0;
+            min-height: 48px;
+            height: 48px;
+            box-sizing: border-box;
+            margin-bottom: 0.5rem;
         }}
 
         .tab-btn {{
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.75rem;
+            font-size: 0.82rem;
             font-weight: 500;
-            padding: 0.4rem 0.55rem;
+            padding: 0 12px;
+            border-radius: 8px;
             white-space: nowrap;
             flex-shrink: 0;
             cursor: pointer;
             position: relative;
-            transition: color 0.3s;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 34px;
+            box-sizing: border-box;
+            line-height: 1;
+        }}
+
+        .tab-btn:hover {{
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
         }}
 
         .tab-btn.active {{
-            color: var(--accent-cyan);
-            font-weight: 600;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(127, 90, 240, 0.35)) !important;
+            border: 1px solid #00f2fe !important;
+            box-shadow: 0 0 14px rgba(0, 242, 254, 0.35) !important;
         }}
 
-        .tab-btn.active::after {{
-            content: '';
-            position: absolute;
-            bottom: -0.85rem;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
-            box-shadow: 0 0 10px var(--accent-cyan);
+        .tab-btn.active::before {{
+            content: '●';
+            color: #00f2fe;
+            font-size: 0.65rem;
+            text-shadow: 0 0 8px #00f2fe;
         }}
 
         .tab-content {{
@@ -963,7 +984,7 @@ async def get_dashboard():
             </div>
 
             
-            <div class="panel-scrollable" style="flex: 1;">
+            <div class="panel-scrollable" style="flex: 1; overflow-y: auto; min-height: 0; padding-right: 0.5rem;">
                 <!-- TAB 1: Business & GCP Account Setup -->
                 <div id="gcp-tab" class="tab-content active">
                     <!-- Business Profile Form Card -->
@@ -1577,20 +1598,19 @@ async def get_dashboard():
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- TAB 6: SYNC CADENCE & SCHEDULES -->
+                <!-- TAB 6: SYNC CADENCE & SCHEDULES -->
             <div id="schedules-tab" class="tab-content">
-                <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 24, 39, 0.95), rgba(24, 16, 47, 0.95)); border: 1px solid rgba(127, 90, 240, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div>
+                <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 24, 39, 0.95), rgba(24, 16, 47, 0.95)); border: 1px solid rgba(127, 90, 240, 0.3); border-radius: 14px; padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; margin-bottom: 1rem;">
+                        <div style="flex: 1; min-width: 0;">
                             <span class="badge" style="background: rgba(127, 90, 240, 0.2); color: #c084fc; border: 1px solid rgba(127, 90, 240, 0.4); margin-bottom: 0.5rem; display: inline-block;">Automated Cadence Manager</span>
-                            <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem;">Recurring Data & Knowledge Base Sync</h2>
-                            <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem;">Recurring Data & Knowledge Base Sync</h2>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
                                 Distinguish between <strong>Day 1 Initial Backfill</strong> (historical ingest executed in Tab 4) and <strong>Day 2+ Recurring Cadences</strong>. Automated Cloud Schedulers trigger incremental updates directly into BigQuery and Pinecone.
                             </p>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: right; flex-shrink: 0;">
                             <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Target Project</span>
                             <span class="badge badge-success gcp-project-placeholder" id="sched-project-display" style="font-size: 0.8rem;">{project_id}</span>
                         </div>

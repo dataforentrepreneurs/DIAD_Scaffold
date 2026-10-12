@@ -336,5 +336,23 @@ Write-Host ("Built image: {0}" -f $IMAGE)
 
 Write-Host ""
 Write-Host "Service URLs:"
-& $GCLOUD run services describe $InternalService --project=$PROJECT --region=$REGION --format="value(status.url)"
-& $GCLOUD run services describe $ExternalService --project=$PROJECT --region=$REGION --format="value(status.url)"
+$intUrl = (& $GCLOUD run services describe $InternalService --project=$PROJECT --region=$REGION --format="value(status.url)").Trim()
+$extUrl = (& $GCLOUD run services describe $ExternalService --project=$PROJECT --region=$REGION --format="value(status.url)").Trim()
+Write-Host "Internal: $intUrl"
+Write-Host "External: $extUrl"
+
+# Auto-update client_rawdata.json so Web Dashboard and Embed Widgets are pre-configured
+$cfgFile = "config/client_rawdata.json"
+if (Test-Path $cfgFile) {
+  try {
+    $cfg = Get-Content $cfgFile -Raw | ConvertFrom-Json
+    if (-not $cfg.client) { $cfg | Add-Member -MemberType NoteProperty -Name "client" -Value @{} }
+    $cfg.client.external_api_url = $extUrl
+    $cfg.client.project_id = $PROJECT
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content $cfgFile -Encoding UTF8
+    Write-Host "Auto-configured $cfgFile with external_api_url ($extUrl)"
+  } catch {
+    Write-Host "Notice: Could not auto-update $cfgFile: $_"
+  }
+}
+

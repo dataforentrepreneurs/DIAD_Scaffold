@@ -151,6 +151,13 @@ async def get_internal_chatbot_page():
         return HTMLResponse(content)
     raise HTTPException(status_code=404, detail="Internal chatbot page not found.")
 
+@app.get('/preview_storefront', response_class=HTMLResponse)
+async def get_preview_storefront_page():
+    content = render_dynamic_template(find_source_file("test_storefront_embed.html", "client_site_package") or (WEB_DIR / "test_storefront_embed.html"))
+    if content:
+        return HTMLResponse(content)
+    raise HTTPException(status_code=404, detail="test_storefront_embed.html not found.")
+
 @app.get('/download_client_package')
 async def download_client_package():
     cfg = get_config_data()
@@ -167,6 +174,7 @@ async def download_client_package():
         ("index.html", "web"),
         ("external_chatbot.html", "web"),
         ("internal_chatbot.html", "web"),
+        ("test_storefront_embed.html", "client_site_package"),
         ("diad-chat-widget.js", "client_site_package"),
         ("README_FOR_CLIENT.md", "client_site_package"),
         ("_redirects", "web")

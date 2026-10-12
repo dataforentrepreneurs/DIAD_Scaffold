@@ -3,8 +3,19 @@
  * Drop this script into your website to enable a floating AI support assistant.
  */
 (function() {
-  const EXTERNAL_API_URL = "{{EXTERNAL_API_URL}}";
-  const BUSINESS_NAME = "{{BUSINESS_NAME}}";
+  const currentScript = document.currentScript || document.querySelector('script[src*="diad-chat-widget"]');
+  const attrEndpoint = currentScript ? currentScript.getAttribute('data-endpoint') : null;
+  const attrBiz = currentScript ? currentScript.getAttribute('data-business') : null;
+
+  let EXTERNAL_API_URL = attrEndpoint || "{{EXTERNAL_API_URL}}";
+  if (!EXTERNAL_API_URL || EXTERNAL_API_URL.includes('{{')) {
+    EXTERNAL_API_URL = "https://diad-external-chat-38640153199.asia-southeast1.run.app/external/chat";
+  }
+
+  let BUSINESS_NAME = attrBiz || "{{BUSINESS_NAME}}";
+  if (!BUSINESS_NAME || BUSINESS_NAME.includes('{{')) {
+    BUSINESS_NAME = "Customer Support";
+  }
 
   // Inject CSS styles
   const style = document.createElement('style');

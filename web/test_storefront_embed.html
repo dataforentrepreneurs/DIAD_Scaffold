@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diamante Collections — Storefront (Widget Embed Test)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #090d16;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+    }
+    .store-brand {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a78bfa, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      margin-left: 2rem;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: #fff; }
+    main {
+      flex: 1;
+      max-width: 1100px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .hero p {
+      color: #94a3b8;
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(44, 182, 125, 0.15);
+      color: #2cb67d;
+      border: 1px solid rgba(44, 182, 125, 0.3);
+      margin-bottom: 1.2rem;
+    }
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+    .product-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(127, 90, 240, 0.4);
+    }
+    .product-img {
+      width: 100%;
+      height: 180px;
+      background: linear-gradient(135deg, #1e1b4b, #0f172a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      margin-bottom: 1.2rem;
+    }
+    .product-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .product-price {
+      color: #38bdf8;
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+    }
+    .buy-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #7f5af0, #6c47e0);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .buy-btn:hover { opacity: 0.9; }
+    .instructions-box {
+      background: rgba(127, 90, 240, 0.08);
+      border: 1px solid rgba(127, 90, 240, 0.3);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 3rem;
+    }
+    .instructions-box h3 {
+      font-size: 1rem;
+      color: #c4b5fd;
+      margin-bottom: 0.5rem;
+    }
+    .instructions-box p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    footer {
+      padding: 2rem;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="store-brand">DIAMANTE COLLECTIONS</div>
+    <nav>
+      <a href="#products">Shop</a>
+      <a href="#about">About</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <span class="badge">Live Storefront Embed Test</span>
+      <h1>Luxury Apparel & Accessories</h1>
+      <p>Simulating an active Shopify or WooCommerce storefront embedding the DIAD AI Chatbot Widget.</p>
+    </div>
+
+    <div class="instructions-box">
+      <h3>🤖 Chatbot Floating Widget Active</h3>
+      <p>
+        Notice the <strong>floating circular chat icon</strong> in the bottom-right corner of your screen. 
+        Click it to open the DIAD assistant, ask <em>"Where is my order?"</em> or <em>"What is your return policy?"</em>, and verify live responses served from Google Cloud Run.
+      </p>
+    </div>
+
+    <div class="products-grid" id="products">
+      <div class="product-card">
+        <div class="product-img">🧥</div>
+        <div class="product-title">Cashmere Winter Overcoat</div>
+        <div class="product-price">$349.00</div>
+        <button class="buy-btn">Add to Cart</button>
+      </div>
+      <div class="product-card">
+        <div class="product-img">👜</div>
+        <div class="product-title">Italian Leather Handbag</div>
+        <div class="product-price">$220.00</div>
+        <button class="buy-btn">Add to Cart</button>
+      </div>
+      <div class="product-card">
+        <div class="product-img">⌚</div>
+        <div class="product-title">Automatic Chronograph Watch</div>
+        <div class="product-price">$480.00</div>
+        <button class="buy-btn">Add to Cart</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 Diamante Collections &bull; DIAD Embed Simulation
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- DIAD AI Assistant Floating Widget Embed Script                      -->
+  <!-- =================================================================== -->
+  <script src="../client_site_package/diad-chat-widget.js"></script>
+
+</body>
+</html>

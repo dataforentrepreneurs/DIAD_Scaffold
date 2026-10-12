@@ -300,7 +300,7 @@
       <!-- Terminal Command Copy Box -->
       <div style="background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
         <code id="setup-cmd" style="font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85rem; color: #38bdf8; word-break: break-all; flex: 1;">
-          iwr "https://diad.d4e.ai/DIAD_release_v1.0.zip" -OutFile "$env:TEMP\DIAD.zip"; Expand-Archive "$env:TEMP\DIAD.zip" -DestinationPath "$home\DIAD" -Force; Remove-Item "$env:TEMP\DIAD.zip"; cd "$home\DIAD"; .\setup.ps1
+          irm https://raw.githubusercontent.com/dataforentrepreneurs/DIAD_Scaffold/main/setup.ps1 | iex
         </code>
         <button onclick="copySetupCommand()" style="background: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-hover)); border: none; color: white; font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; transition: all 0.2s ease;">
           📋 Copy Command

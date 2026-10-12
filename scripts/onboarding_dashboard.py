@@ -59,10 +59,15 @@ def get_client_replacements():
     ext_url = cfg.get("client", {}).get("external_api_url", "").strip()
     int_url = cfg.get("client", {}).get("internal_api_url", "").strip()
     
-    if not ext_url or "yhpwhxzeeq" in ext_url:
+    if not ext_url:
         ext_url = "/external/chat"
-    if not int_url or "yhpwhxzeeq" in int_url:
+    elif ext_url.startswith("http") and not ext_url.endswith("/external/chat"):
+        ext_url = ext_url.rstrip("/") + "/external/chat"
+        
+    if not int_url:
         int_url = "/internal/chat"
+    elif int_url.startswith("http") and not int_url.endswith("/internal/chat"):
+        int_url = int_url.rstrip("/") + "/internal/chat"
     
     return {
         "{{BUSINESS_NAME}}": biz_name,

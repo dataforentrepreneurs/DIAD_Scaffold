@@ -123,7 +123,8 @@
     const configured = EXTERNAL_API_URL;
     const urlsToTry = [];
     if (configured && !configured.includes('{{') && configured.startsWith('http')) {
-      urlsToTry.push(configured);
+      const fullUrl = configured.endsWith('/external/chat') ? configured : (configured.replace(/\/+$/, '') + '/external/chat');
+      urlsToTry.push(fullUrl);
     }
     if (window.location.protocol.startsWith('http') && !urlsToTry.includes('/external/chat')) {
       urlsToTry.push('/external/chat');

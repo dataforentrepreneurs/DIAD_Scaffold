@@ -349,8 +349,11 @@ I can help you check your order status, tracking info, or answer questions about
       if (!endpointsToTry.includes('http://127.0.0.1:8000/external/chat')) {
         endpointsToTry.push('http://127.0.0.1:8000/external/chat');
       }
-      if (cloudRunUrl && !cloudRunUrl.includes('{{') && cloudRunUrl.startsWith('http') && !endpointsToTry.includes(cloudRunUrl)) {
-        endpointsToTry.push(cloudRunUrl);
+      if (cloudRunUrl && !cloudRunUrl.includes('{{') && cloudRunUrl.startsWith('http')) {
+        const fullCloudRun = cloudRunUrl.endsWith('/external/chat') ? cloudRunUrl : (cloudRunUrl.replace(/\/+$/, '') + '/external/chat');
+        if (!endpointsToTry.includes(fullCloudRun)) {
+          endpointsToTry.push(fullCloudRun);
+        }
       }
 
       let lastErr = null;

@@ -333,8 +333,11 @@ I am connected to your BigQuery data warehouse and Pinecone documentation vector
       if (!endpointsToTry.includes('http://127.0.0.1:8000/internal/chat')) {
         endpointsToTry.push('http://127.0.0.1:8000/internal/chat');
       }
-      if (cloudRunUrl && !cloudRunUrl.includes('{{') && cloudRunUrl.startsWith('http') && !endpointsToTry.includes(cloudRunUrl)) {
-        endpointsToTry.push(cloudRunUrl);
+      if (cloudRunUrl && !cloudRunUrl.includes('{{') && cloudRunUrl.startsWith('http')) {
+        const fullCloudRun = cloudRunUrl.endsWith('/internal/chat') ? cloudRunUrl : (cloudRunUrl.replace(/\/+$/, '') + '/internal/chat');
+        if (!endpointsToTry.includes(fullCloudRun)) {
+          endpointsToTry.push(fullCloudRun);
+        }
       }
 
       let lastErr = null;

@@ -6,6 +6,15 @@ echo        One-Click Onboarding Launcher
 echo ==============================================================
 echo.
 
+:: 1. If running directly inside a DIAD project directory, launch immediately!
+if exist "scripts\onboarding_dashboard.py" (
+    echo [INFO] Running from current DIAD directory: %CD%
+    powershell -ExecutionPolicy Bypass -File .\setup.ps1
+    if errorlevel 1 pause
+    exit /b
+)
+
+:: 2. Handle optional reset switch
 if "%1"=="--reset" goto do_reset
 if "%1"=="/reset" goto do_reset
 goto check_version
@@ -17,12 +26,12 @@ rmdir /s /q "%USERPROFILE%\DIAD" 2>nul
 :check_version
 if not exist "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" goto do_download
 
-findstr /C:"Sync Cadence" "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" >nul 2>&1
-if errorlevel 1 (
-    echo [INFO] Detected older DIAD version. Upgrading to latest release...
-    goto do_download
-)
+findstr /c:"Sync Cadence" "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" >nul 2>&1
+if errorlevel 1 goto do_upgrade
 goto run_setup
+
+:do_upgrade
+echo [INFO] Detected older DIAD version. Upgrading to latest release...
 
 :do_download
 echo [INFO] Downloading latest DIAD release package from d4e.ai...
@@ -34,4 +43,9 @@ cd /d "%USERPROFILE%\DIAD"
 echo.
 echo [INFO] Launching DIAD setup engine...
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Setup encountered an issue. See details above.
+    pause
+)
 pause

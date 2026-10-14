@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diamante Collections — Storefront (Widget Embed Test)</title>
+  <title>{{BUSINESS_NAME}} — Storefront (Widget Embed Test)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -33,6 +33,7 @@
       background: linear-gradient(135deg, #a78bfa, #38bdf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
     }
     nav a {
       color: #94a3b8;
@@ -73,19 +74,19 @@
       font-weight: 700;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      background: rgba(44, 182, 125, 0.15);
-      color: #2cb67d;
-      border: 1px solid rgba(44, 182, 125, 0.3);
-      margin-bottom: 1.2rem;
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      margin-bottom: 1rem;
     }
     .products-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
-      margin-bottom: 4rem;
+      margin-top: 2rem;
     }
     .product-card {
-      background: rgba(30, 41, 59, 0.6);
+      background: rgba(30, 41, 59, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 16px;
       padding: 1.5rem;
@@ -93,22 +94,21 @@
     }
     .product-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(127, 90, 240, 0.4);
+      border-color: rgba(167, 139, 250, 0.4);
     }
     .product-img {
-      width: 100%;
       height: 180px;
-      background: linear-gradient(135deg, #1e1b4b, #0f172a);
+      background: rgba(15, 23, 42, 0.6);
       border-radius: 12px;
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 3rem;
-      margin-bottom: 1.2rem;
     }
     .product-title {
+      font-weight: 600;
       font-size: 1.1rem;
-      font-weight: 700;
       margin-bottom: 0.5rem;
     }
     .product-price {
@@ -157,8 +157,21 @@
 </head>
 <body>
 
+  <!-- Top Preview Mode Notification Banner -->
+  <aside style="background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%); border-bottom: 1px solid rgba(167, 139, 250, 0.4); padding: 0.85rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; font-size: 0.88rem; color: #e0e7ff; z-index: 1000; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <span style="background: #4f46e5; color: #ffffff; font-size: 0.72rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.3rem;">
+        <span>🛡️</span> PREVIEW MODE
+      </span>
+      <span><strong>Safe Local Test Page:</strong> This page simulates your active storefront on your PC without touching your live website.</span>
+    </div>
+    <div style="color: #c7d2fe; font-size: 0.85rem; white-space: nowrap;">
+      👉 Look at the <strong>bottom-right corner</strong> & click the chat bubble to test your AI assistant.
+    </div>
+  </aside>
+
   <header>
-    <div class="store-brand">DIAMANTE COLLECTIONS</div>
+    <div class="store-brand">{{BUSINESS_NAME}}</div>
     <nav>
       <a href="#products">Shop</a>
       <a href="#about">About</a>
@@ -177,7 +190,7 @@
       <h3>🤖 Chatbot Floating Widget Active</h3>
       <p>
         Notice the <strong>floating circular chat icon</strong> in the bottom-right corner of your screen. 
-        Click it to open the DIAD assistant, ask <em>"Where is my order?"</em> or <em>"What is your return policy?"</em>, and verify live responses served from Google Cloud Run.
+        Click it to open the <strong>{{BUSINESS_NAME}}</strong> assistant, ask <em>"Where is my order?"</em> or <em>"What is your return policy?"</em>, and verify live responses before deploying to your live store.
       </p>
     </div>
 
@@ -204,13 +217,13 @@
   </main>
 
   <footer>
-    &copy; 2026 Diamante Collections &bull; DIAD Embed Simulation
+    &copy; 2026 {{BUSINESS_NAME}} &bull; DIAD Embed Simulation
   </footer>
 
   <!-- =================================================================== -->
   <!-- DIAD AI Assistant Floating Widget Embed Script                      -->
   <!-- =================================================================== -->
-  <script src="../client_site_package/diad-chat-widget.js"></script>
+  <script src="diad-chat-widget.js"></script>
 
 </body>
 </html>

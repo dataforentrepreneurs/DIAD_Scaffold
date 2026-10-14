@@ -69,11 +69,13 @@ def get_client_replacements():
     elif int_url.startswith("http") and not int_url.endswith("/internal/chat"):
         int_url = int_url.rstrip("/") + "/internal/chat"
     
+    safe_biz = "".join([c if c.isalnum() else "_" for c in biz_name]).strip("_").lower() or "your_business"
     return {
         "{{BUSINESS_NAME}}": biz_name,
         "{{PROJECT_ID}}": project_id,
         "{{EXTERNAL_API_URL}}": ext_url,
-        "{{INTERNAL_API_URL}}": int_url
+        "{{INTERNAL_API_URL}}": int_url,
+        "{{BUSINESS_SLUG}}": safe_biz
     }
 
 def find_source_file(filename, subfolder):
@@ -1521,15 +1523,18 @@ async def get_dashboard():
                         </p>
 
                         <!-- Preview Buttons Grid -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                            <a href="/preview_storefront" target="_blank" class="btn" style="padding: 0.6rem 1rem; font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; text-decoration: none; text-align: center; border-radius: 6px; font-weight: 700;">
+                                🛒 Storefront Preview ↗
+                            </a>
                             <a href="/portal" target="_blank" class="btn" style="padding: 0.6rem 1rem; font-size: 0.8rem; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #fff; text-decoration: none; text-align: center; border-radius: 6px;">
-                                🚀 Main Portal (/portal) ↗
+                                🚀 Executive Portal ↗
                             </a>
                             <a href="/external_chatbot" target="_blank" class="btn" style="padding: 0.6rem 1rem; font-size: 0.8rem; background: rgba(127,90,240,0.15); border: 1px solid rgba(127,90,240,0.3); color: #fff; text-decoration: none; text-align: center; border-radius: 6px;">
-                                🛍️ Customer Chatbot (/external_chatbot) ↗
+                                🛍️ Customer Chatbot ↗
                             </a>
                             <a href="/internal_chatbot" target="_blank" class="btn" style="padding: 0.6rem 1rem; font-size: 0.8rem; background: rgba(44,182,125,0.15); border: 1px solid rgba(44,182,125,0.3); color: #fff; text-decoration: none; text-align: center; border-radius: 6px;">
-                                📊 Internal Advisor (/internal_chatbot) ↗
+                                📊 Internal Advisor ↗
                             </a>
                         </div>
 
@@ -2955,7 +2960,15 @@ async def upsert_secrets(payload: SecretsPayload):
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env
             )
             auth_stdout, _ = await auth_proc.communicate()
-            yield f"data: {auth_stdout.decode('utf-8', errors='replace').strip()}\n\n"
+            decoded_auth = auth_stdout.decode('utf-8', errors='replace').strip()
+            yield f"data: {decoded_auth}\n\n"
+            if auth_proc.returncode != 0:
+                yield f"data: [ERROR] Service account activation failed! The GCP key was rejected ('Invalid JWT Signature').\n\n"
+                yield f"data: [REASON] The private key in '{key_file}' has been deleted, rotated, or disabled in Google Cloud Console.\n\n"
+                yield f"data: [FIX] 1. Go to GCP Console -> IAM & Admin -> Service Accounts ({project_id}).\n\n"
+                yield f"data: [FIX] 2. Click '{deployer_sa or 'diad-onboarding'}' -> 'Keys' -> 'Add Key' -> 'Create new key' (JSON).\n\n"
+                yield f"data: [FIX] 3. Return to Tab 1 (Account Setup) and upload the newly downloaded JSON key.\n\n"
+                return
         elif deployer_sa:
             env["CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT"] = deployer_sa
             yield f"data: Impersonating Service Account: {deployer_sa}\n\n"

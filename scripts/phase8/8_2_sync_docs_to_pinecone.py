@@ -214,7 +214,7 @@ def crawl_drive_folder(service, folder_id: str) -> List[Dict]:
             service.files()
             .list(
                 q=f"'{folder_id}' in parents and trashed = false",
-                fields="nextPageToken, files(id, name, mimeType)",
+                fields="nextPageToken, files(id, name, mimeType, modifiedTime, md5Checksum, version)",
                 pageToken=page_token,
             )
             .execute()
@@ -239,6 +239,9 @@ def crawl_drive_folder(service, folder_id: str) -> List[Dict]:
                         "id": file_id,
                         "name": name,
                         "mimeType": mime,
+                        "modifiedTime": f.get("modifiedTime"),
+                        "md5Checksum": f.get("md5Checksum"),
+                        "version": f.get("version"),
                     }
                 )
 
@@ -433,6 +436,9 @@ def crawl_drive(folder_id: str, service_account_key_path: str) -> List[Dict]:
                 "name": name,
                 "text": text,
                 "folder_id": folder_id,  # 👈 root folder we crawled
+                "modifiedTime": f.get("modifiedTime"),
+                "md5Checksum": f.get("md5Checksum"),
+                "version": f.get("version"),
             }
         )
 
@@ -1024,10 +1030,13 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
         # Check incremental cache
         import hashlib
         doc_hash = hashlib.sha256((d.get("text") or "").encode("utf-8")).hexdigest()
+        file_version = d.get("md5Checksum") or d.get("modifiedTime") or d.get("version")
         state_key = f"{d['source']}_{d['doc_id']}"
-        if incremental and not force and sync_state.get(state_key, {}).get("hash") == doc_hash:
-            logger.info(f"   ⏩ [Incremental] Document unchanged ({d['name']}). Skipping.")
-            continue
+        prev_state = sync_state.get(state_key, {})
+        if incremental and not force:
+            if prev_state.get("hash") == doc_hash or (file_version and prev_state.get("version") == file_version):
+                logger.info(f"   ⏩ [Incremental] Document unchanged ({d['name']}). Skipping.")
+                continue
         chunk_size = int(doc_rag.get("chunk_tokens", 300)) * 4  # rough proxy: 1 token ~ 4 chars
         overlap = int(doc_rag.get("chunk_overlap", 50)) * 4
 
@@ -1105,6 +1114,7 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
             logger.info(f"   ✔ Upsert completed for {d['name']}")
             sync_state[state_key] = {
                 "hash": doc_hash,
+                "version": file_version,
                 "last_synced": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "name": d.get("name"),
                 "source": d["source"]
@@ -1132,11 +1142,12 @@ def parse_args():
     p = argparse.ArgumentParser(description="DIAD Document Sync to Pinecone")
     p.add_argument("--config", default="config/client_rawdata.json", help="Path to config JSON")
     p.add_argument("--source", default="all", choices=["all", "gdrive", "drive", "notion", "confluence"], help="Filter sync to a specific source")
-    p.add_argument("--incremental", action="store_true", help="Only embed new or modified documents")
-    p.add_argument("--force", action="store_true", help="Force re-indexing of all documents")
+    p.add_argument("--incremental", action="store_true", default=True, help="Only embed new or modified documents (default: True)")
+    p.add_argument("--force", action="store_true", default=False, help="Force re-indexing of all documents")
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     sync_documents(args.config, source=args.source, incremental=args.incremental, force=args.force)
+

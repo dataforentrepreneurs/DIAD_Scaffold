@@ -294,6 +294,8 @@ $internalArgs = @(
   "--image", $IMAGE,
   "--memory=2Gi",
   "--cpu=1",
+  "--max-instances=5",
+  "--concurrency=80",
   "--no-allow-unauthenticated",
   "--ingress=$InternalIngress",
   "--set-env-vars", "$commonEnv,APP_MODULE=chatbot.internal_api:app"
@@ -327,6 +329,8 @@ $externalArgs = @(
   "--image", $IMAGE,
   "--memory=2Gi",
   "--cpu=1",
+  "--max-instances=5",
+  "--concurrency=80",
   $authFlag,
   "--ingress=all",
   "--set-env-vars", "$commonEnv,APP_MODULE=chatbot.external_api:app"

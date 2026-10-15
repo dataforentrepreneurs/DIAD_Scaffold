@@ -48,7 +48,7 @@ if (-not [string]::IsNullOrWhiteSpace($ImageRef)) {
     --image $ImageRef `
     --service-account $RuntimeSA `
     --command python `
-    --args "scripts/phase8/8_2_sync_docs_to_pinecone.py"
+    --args "scripts/phase8/8_2_sync_docs_to_pinecone.py","--incremental"
 } else {
   Write-Host "Deploying Cloud Run Job from source (Cloud Build)..."
   gcloud run jobs deploy $JOB_NAME `
@@ -56,7 +56,7 @@ if (-not [string]::IsNullOrWhiteSpace($ImageRef)) {
     --source $SOURCE_DIR `
     --service-account $RuntimeSA `
     --command python `
-    --args "scripts/phase8/8_2_sync_docs_to_pinecone.py","--config",$CONFIG_PATH
+    --args "scripts/phase8/8_2_sync_docs_to_pinecone.py","--config",$CONFIG_PATH,"--incremental"
 }
 
 Write-Host "`n✅ Job deployed."

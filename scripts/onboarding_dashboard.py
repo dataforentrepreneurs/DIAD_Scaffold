@@ -297,9 +297,10 @@ async def get_dashboard():
     else:
         business_name_val = raw_biz_name
         display_biz_name = raw_biz_name
+    business_name = display_biz_name
 
     raw_biz_url = cfg.get("client", {}).get("website_url", "")
-    if not raw_biz_url or raw_biz_url in ["https://your-domain.com", "YOUR_WEBSITE_URL"]:
+    if not raw_biz_url or raw_biz_url.rstrip("/") in ["https://your-domain.com", "https://your-website.com", "YOUR_WEBSITE_URL"]:
         website_url_val = ""
     else:
         website_url_val = raw_biz_url
@@ -2325,7 +2326,8 @@ async def get_dashboard():
                 
                 // Resolve business name & website URL (check config, query params, and localStorage)
                 let resolvedBiz = (data.client?.business_name && data.client.business_name !== 'YOUR_BUSINESS_NAME' && data.client.business_name !== 'Not Configured') ? data.client.business_name : '';
-                let resolvedUrl = (data.client?.website_url && data.client.website_url !== 'https://your-domain.com' && data.client.website_url !== 'YOUR_WEBSITE_URL') ? data.client.website_url : '';
+                let rawUrl = data.client?.website_url ? data.client.website_url.replace(/\/+$/, '') : '';
+                let resolvedUrl = (rawUrl && rawUrl !== 'https://your-domain.com' && rawUrl !== 'https://your-website.com' && rawUrl !== 'YOUR_WEBSITE_URL') ? data.client.website_url : '';
 
                 // Fallback to URL query params or localStorage
                 const urlParams = new URLSearchParams(window.location.search);

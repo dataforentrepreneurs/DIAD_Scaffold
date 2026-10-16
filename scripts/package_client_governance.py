@@ -20,15 +20,24 @@ def load_client_config(config_path: str = "config/client_rawdata.json"):
             return json.load(f)
     return {}
 
-def generate_package(client_slug: str = "diamante", output_dir: str = "dist_release"):
+def generate_package(client_slug: str = None, output_dir: str = "dist_release"):
     cfg = load_client_config()
     client_info = cfg.get("client", {})
     gcp_info = cfg.get("gcp", {})
     
-    business_name = client_info.get("business_name") or client_slug.capitalize()
-    project_id = client_info.get("project_id") or f"{client_slug}-diad"
+    raw_biz = client_info.get("business_name")
+    if not client_slug:
+        if raw_biz and raw_biz != "YOUR_BUSINESS_NAME":
+            client_slug = "".join([c if c.isalnum() else "_" for c in raw_biz]).strip("_").lower()
+        else:
+            client_slug = "client"
+
+    business_name = raw_biz if (raw_biz and raw_biz != "YOUR_BUSINESS_NAME") else client_slug.replace("_", " ").title()
+    project_id = client_info.get("project_id")
+    if not project_id or project_id == "Not Configured":
+        project_id = f"{client_slug}-diad"
     region = gcp_info.get("region", "asia-southeast1")
-    store_url = client_info.get("store_url", "https://yourstore.com")
+    store_url = client_info.get("website_url") or client_info.get("store_url", "https://yourstore.com")
     admin_email = client_info.get("business_email", "admin@yourstore.com")
     
     out_path = ROOT_DIR / output_dir
@@ -210,7 +219,7 @@ Vendor provides at least thirty (30) days advance written email notice to admini
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate Client Governance Package")
-    parser.add_argument("--client", default="diamante", help="Client slug (e.g. diamante)")
+    parser.add_argument("--client", default=None, help="Client slug (e.g. acme, mybrand). Defaults to configured business.")
     parser.add_argument("--output", default="dist_release", help="Output directory")
     args = parser.parse_args()
     generate_package(client_slug=args.client, output_dir=args.output)

@@ -1,10 +1,22 @@
 param(
   [string]$ProjectId = $env:GOOGLE_CLOUD_PROJECT,
-  [double]$BudgetAmount = 50.0,
+  [string]$StoreTier = "Growth", # Boutique (<1k orders), Growth (1k-10k orders), Scaling (10k-50k orders)
+  [double]$BudgetAmount = 0.0,
   [string]$CurrencyCode = "SGD",
   [string]$AlertEmail = "",
   [string]$ConfigPath = "config/client_rawdata.json"
 )
+
+# Set budget based on recommended store size bracket if not explicitly passed
+if ($BudgetAmount -eq 0.0) {
+  switch ($StoreTier.ToLower()) {
+    "boutique" { $BudgetAmount = 30.0 }
+    "starter"  { $BudgetAmount = 30.0 }
+    "scaling"  { $BudgetAmount = 120.0 }
+    "enterprise" { $BudgetAmount = 150.0 }
+    default    { $BudgetAmount = 60.0 } # Growth default
+  }
+}
 
 # 1. Resolve Project ID & Region from config if not provided
 if ([string]::IsNullOrWhiteSpace($ProjectId) -or $ProjectId -eq "Not Configured") {
@@ -34,12 +46,18 @@ Write-Host "==========================================================" -Foregro
 Write-Host "  DIAD Gate 6: Project-Scoped GCP Budget Alert Setup" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "Target Project:    $ProjectId" -ForegroundColor Yellow
+Write-Host "Selected Bracket:  $StoreTier Tier" -ForegroundColor Yellow
 Write-Host "Budget Cap:        $BudgetAmount $CurrencyCode / month" -ForegroundColor Yellow
 Write-Host "Thresholds:        50% ($($BudgetAmount * 0.5) $CurrencyCode), 80% ($($BudgetAmount * 0.8) $CurrencyCode), 100% ($BudgetAmount $CurrencyCode)" -ForegroundColor Yellow
 if ($AlertEmail) {
   Write-Host "Alert Recipient:   $AlertEmail" -ForegroundColor Yellow
 }
 Write-Host ""
+Write-Host "--- Recommended Sizing Brackets ---" -ForegroundColor Gray
+Write-Host "  • Boutique Store (< 1k orders/mo, < 30k visits):   S$25 - S$35 / mo" -ForegroundColor Gray
+Write-Host "  • Growth Retail (1k - 10k orders/mo, 30k-150k visits): S$50 - S$80 / mo (Selected)" -ForegroundColor Gray
+Write-Host "  • Scaling Brand (10k - 50k+ orders/mo, 150k-500k+ visits): S$100 - S$150 / mo" -ForegroundColor Gray
+Write-Host "-----------------------------------`n" -ForegroundColor Gray
 
 # 2. Query billing account linked to this specific project
 Write-Host "Checking linked Cloud Billing Account for project '$ProjectId'..." -ForegroundColor Gray

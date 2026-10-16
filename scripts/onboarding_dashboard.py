@@ -289,7 +289,20 @@ async def get_dashboard():
     # Read the current config to inject some state if needed
     cfg = get_config_data()
     project_id = cfg.get("client", {}).get("project_id", "Not Configured")
-    business_name = cfg.get("client", {}).get("business_name", "Not Configured")
+    
+    raw_biz_name = cfg.get("client", {}).get("business_name", "")
+    if not raw_biz_name or raw_biz_name in ["YOUR_BUSINESS_NAME", "Not Configured"]:
+        business_name_val = ""
+        display_biz_name = "Your Business"
+    else:
+        business_name_val = raw_biz_name
+        display_biz_name = raw_biz_name
+
+    raw_biz_url = cfg.get("client", {}).get("website_url", "")
+    if not raw_biz_url or raw_biz_url in ["https://your-domain.com", "YOUR_WEBSITE_URL"]:
+        website_url_val = ""
+    else:
+        website_url_val = raw_biz_url
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1001,11 +1014,11 @@ async def get_dashboard():
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label for="biz_name" style="font-weight: 600; color: #fff;">Business Name</label>
-                                    <input type="text" id="biz_name" placeholder="e.g. Acme Jewelry" style="width: 100%; font-size: 0.85rem;" oninput="onBizNameChange(this.value)">
+                                    <input type="text" id="biz_name" placeholder="e.g. Acme Jewelry" value="{business_name_val}" style="width: 100%; font-size: 0.85rem;" oninput="onBizNameChange(this.value)">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label for="biz_url" style="font-weight: 600; color: #fff;">Website URL</label>
-                                    <input type="text" id="biz_url" placeholder="e.g. https://acme.com" style="width: 100%; font-size: 0.85rem;">
+                                    <input type="text" id="biz_url" placeholder="e.g. https://acme.com" value="{website_url_val}" style="width: 100%; font-size: 0.85rem;">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -1096,9 +1109,14 @@ async def get_dashboard():
                             <div class="upload-desc">or click to browse from files</div>
                             <input type="file" id="key-file-input" accept=".json" style="display: none;" onchange="handleFileSelect(event)">
                         </div>
-                        <div id="step4-success-banner" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; font-size: 0.82rem; color: var(--accent-green); line-height: 1.5;">
+                        <div id="step4-success-banner" style="display: none; margin-top: 1rem; padding: 0.85rem 1rem; background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; font-size: 0.82rem; color: var(--accent-green); line-height: 1.5;">
                             ✅ <strong>GCP Key Configured Successfully!</strong> Environment Health Check is now 100% verified green.<br>
-                            👉 <strong>Next Step:</strong> Proceed to <strong>2. Data Sources Link Guide</strong> in the top tab menu above!
+                            👉 <strong>Next Step:</strong> Proceed to <strong>2. Connect Docs</strong> to link your knowledge base and AI models.<br>
+                            <div style="margin-top: 0.75rem;">
+                                <button type="button" class="btn" onclick="switchTab('sources-tab')" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); color: white; padding: 0.45rem 1.1rem; font-size: 0.82rem; font-weight: 600; border-radius: 6px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25);">
+                                    Proceed to 2. Connect Docs →
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1218,41 +1236,54 @@ async def get_dashboard():
 
                     <!-- AI Engine & Vector Database Setup Card -->
                     <div style="background: rgba(127,90,240,0.05); border: 1px solid rgba(127,90,240,0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;" onclick="explainSource('secrets')">
-                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-purple); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-                            <span>🤖 4. AI Engine & Vector Database Keys</span>
+                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-purple); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                            <span style="display: flex; align-items: center; gap: 0.4rem;">🤖 4. AI Engine Keys & Multi-LLM Setup</span>
+                            <span style="font-size: 0.7rem; color: var(--accent-cyan); background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.3); padding: 0.15rem 0.5rem; border-radius: 4px;">Multi-LLM Redundancy</span>
                         </div>
                         <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.75rem;">
-                            Select your preferred AI provider (OpenAI, Gemini, or Claude) and enter your Pinecone Vector DB key. Click <strong>Sync Secrets to GCP</strong> to encrypt all entered keys in Google Secret Manager!
+                            Empower DIAD with high availability! Choose your <strong>Primary AI Model</strong> and optionally configure keys for additional providers (OpenAI, Gemini, Anthropic). If your primary provider experiences quota limits or downtime, DIAD automatically falls back to your secondary models.
                         </p>
                         <form id="secrets-form" onsubmit="saveSecrets(event)">
                             <!-- Provider Selection -->
-                            <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
-                                <label style="font-weight: 600; color: #fff; font-size: 0.82rem; margin-bottom: 0.4rem; display: block;">Select Primary AI Model Provider</label>
-                                <select id="llm_provider_choice" onchange="onLlmProviderChange(this.value)" style="width: 100%; padding: 0.45rem; border-radius: 6px; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--card-border); font-size: 0.85rem; margin-bottom: 0.6rem;">
+                            <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.75rem;">
+                                <label style="font-weight: 600; color: #fff; font-size: 0.82rem; margin-bottom: 0.35rem; display: block;">Select Primary AI Model Provider</label>
+                                <select id="llm_provider_choice" onchange="onLlmProviderChange(this.value)" style="width: 100%; padding: 0.45rem; border-radius: 6px; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--card-border); font-size: 0.85rem;">
                                     <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
                                     <option value="gemini">Google Gemini (Gemini 2.0 Flash / 1.5 Pro)</option>
                                     <option value="anthropic">Anthropic Claude (Claude 3.5 Sonnet)</option>
                                 </select>
-                                
-                                <div id="openai-key-block">
+                            </div>
+                            
+                            <!-- Multi-LLM Inputs Stack -->
+                            <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 0.75rem;">
+                                <div id="openai-key-block" style="background: rgba(0,242,254,0.04); border: 1px solid rgba(0,242,254,0.4); border-radius: 6px; padding: 0.7rem; transition: all 0.2s ease;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                                        <label for="sec_openai" style="font-size: 0.78rem; font-weight: 600; color: #fff;">OPENAI_API_KEY <span style="color: #ff6b6b; font-size: 0.7rem;">(Required)</span></label>
+                                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <label for="sec_openai" style="font-size: 0.78rem; font-weight: 600; color: #fff;">OpenAI API Key</label>
+                                            <span id="badge-openai" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 600; background: rgba(0,255,136,0.15); color: var(--accent-green); border: 1px solid rgba(0,255,136,0.3);">⭐ PRIMARY</span>
+                                        </div>
                                         <a href="https://platform.openai.com/api-keys" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get OpenAI Key ↗</a>
                                     </div>
                                     <input type="password" id="sec_openai" placeholder="sk-..." style="width: 100%; font-size: 0.82rem;">
                                 </div>
 
-                                <div id="gemini-key-block" style="display: none;">
+                                <div id="gemini-key-block" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 0.7rem; transition: all 0.2s ease;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                                        <label for="sec_gemini" style="font-size: 0.78rem; font-weight: 600; color: #fff;">GEMINI_API_KEY <span style="color: #ff6b6b; font-size: 0.7rem;">(Required)</span></label>
+                                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <label for="sec_gemini" style="font-size: 0.78rem; font-weight: 600; color: #fff;">Google Gemini API Key</label>
+                                            <span id="badge-gemini" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 500; background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);">🔄 FALLBACK</span>
+                                        </div>
                                         <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get Gemini Key ↗</a>
                                     </div>
                                     <input type="password" id="sec_gemini" placeholder="AIzaSy..." style="width: 100%; font-size: 0.82rem;">
                                 </div>
 
-                                <div id="anthropic-key-block" style="display: none;">
+                                <div id="anthropic-key-block" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 0.7rem; transition: all 0.2s ease;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                                        <label for="sec_anthropic" style="font-size: 0.78rem; font-weight: 600; color: #fff;">ANTHROPIC_API_KEY <span style="color: #ff6b6b; font-size: 0.7rem;">(Required)</span></label>
+                                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <label for="sec_anthropic" style="font-size: 0.78rem; font-weight: 600; color: #fff;">Anthropic Claude API Key</label>
+                                            <span id="badge-anthropic" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 500; background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);">🔄 FALLBACK</span>
+                                        </div>
                                         <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get Claude Key ↗</a>
                                     </div>
                                     <input type="password" id="sec_anthropic" placeholder="sk-ant-..." style="width: 100%; font-size: 0.82rem;">
@@ -1975,10 +2006,16 @@ async def get_dashboard():
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
             // Activate button
-            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId));
             if (activeBtn) activeBtn.classList.add('active');
             
-            document.getElementById(tabId).classList.add('active');
+            const targetEl = document.getElementById(tabId);
+            if (targetEl) targetEl.classList.add('active');
+
+            // Scroll container and window back to top so newly opened tab starts at top
+            const scrollContainer = document.querySelector('.panel-scrollable');
+            if (scrollContainer) scrollContainer.scrollTop = 0;
+            window.scrollTo(0, 0);
         }}
 
         // Copy Service Account Email to clipboard
@@ -2267,6 +2304,10 @@ async def get_dashboard():
                 document.querySelectorAll('.biz-name-display').forEach(e => e.textContent = displayBiz);
                 const slugEl = document.getElementById('package-biz-slug');
                 if (slugEl) slugEl.textContent = displayBiz.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'your_business';
+                try {{
+                    if (name) localStorage.setItem('diad_biz_name', name);
+                    if (url) localStorage.setItem('diad_biz_url', url);
+                }} catch(e) {{}}
                 showToast("Business Profile saved!", "success");
             }} catch(err) {{
                 showToast(err.message, "error");
@@ -2282,29 +2323,37 @@ async def get_dashboard():
                 const data = await res.json();
                 fullConfig = data;
                 
-                // Set form fields
-                if (document.getElementById('biz_name')) document.getElementById('biz_name').value = data.client?.business_name || '';
-                if (document.getElementById('biz_url')) document.getElementById('biz_url').value = data.client?.website_url || '';
+                // Resolve business name & website URL (check config, query params, and localStorage)
+                let resolvedBiz = (data.client?.business_name && data.client.business_name !== 'YOUR_BUSINESS_NAME' && data.client.business_name !== 'Not Configured') ? data.client.business_name : '';
+                let resolvedUrl = (data.client?.website_url && data.client.website_url !== 'https://your-domain.com' && data.client.website_url !== 'YOUR_WEBSITE_URL') ? data.client.website_url : '';
+
+                // Fallback to URL query params or localStorage
+                const urlParams = new URLSearchParams(window.location.search);
+                if (!resolvedBiz) resolvedBiz = urlParams.get('biz_name') || localStorage.getItem('diad_biz_name') || '';
+                if (!resolvedUrl) resolvedUrl = urlParams.get('biz_url') || localStorage.getItem('diad_biz_url') || '';
+
+                if (document.getElementById('biz_name')) document.getElementById('biz_name').value = resolvedBiz;
+                if (document.getElementById('biz_url')) document.getElementById('biz_url').value = resolvedUrl;
                 
-                let resolvedBizName = data.client?.business_name;
-                if (!resolvedBizName || resolvedBizName === 'YOUR_BUSINESS_NAME') {{
-                    resolvedBizName = 'Your Business';
-                }}
+                let displayBiz = resolvedBiz || 'Your Business';
                 const el = document.getElementById('client-name-status');
-                if (el) el.textContent = resolvedBizName;
-                document.querySelectorAll('.biz-name-display').forEach(e => e.textContent = resolvedBizName);
+                if (el) el.textContent = displayBiz;
+                document.querySelectorAll('.biz-name-display').forEach(e => e.textContent = displayBiz);
                 const slugEl = document.getElementById('package-biz-slug');
-                if (slugEl) slugEl.textContent = resolvedBizName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'your_business';
+                if (slugEl) slugEl.textContent = displayBiz.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'your_business';
                 
-                if (document.getElementById('client_business_name')) document.getElementById('client_business_name').value = data.client?.business_name || '';
+                if (document.getElementById('client_business_name')) document.getElementById('client_business_name').value = resolvedBiz;
                 if (document.getElementById('client_project_id')) document.getElementById('client_project_id').value = data.client?.project_id || '';
-                if (document.getElementById('client_website_url')) document.getElementById('client_website_url').value = data.client?.website_url || '';
+                if (document.getElementById('client_website_url')) document.getElementById('client_website_url').value = resolvedUrl;
                 if (document.getElementById('client_bq_location')) document.getElementById('client_bq_location').value = data.client?.bq_location || 'asia-southeast1';
                 
                 if (document.getElementById('drag_index_name')) document.getElementById('drag_index_name').value = data.document_rag?.index_name || '';
                 if (document.getElementById('drag_dimension')) document.getElementById('drag_dimension').value = data.document_rag?.dimension || '384';
                 
-                if (document.getElementById('llm_primary_provider')) document.getElementById('llm_primary_provider').value = data.llm?.primary?.provider || 'openai';
+                const chosenLlm = data.llm?.primary?.provider || 'openai';
+                if (document.getElementById('llm_primary_provider')) document.getElementById('llm_primary_provider').value = chosenLlm;
+                if (document.getElementById('llm_provider_choice')) document.getElementById('llm_provider_choice').value = chosenLlm;
+                onLlmProviderChange(chosenLlm);
                 if (document.getElementById('llm_primary_model')) document.getElementById('llm_primary_model').value = data.llm?.primary?.model || '';
                 
                 if (document.getElementById('gcp_key_file')) document.getElementById('gcp_key_file').value = data.gcp?.["key-file"] || data.gcp?.key_file || '';
@@ -2397,9 +2446,34 @@ async def get_dashboard():
         }}
 
         function onLlmProviderChange(provider) {{
-            if (document.getElementById('openai-key-block')) document.getElementById('openai-key-block').style.display = (provider === 'openai') ? 'block' : 'none';
-            if (document.getElementById('gemini-key-block')) document.getElementById('gemini-key-block').style.display = (provider === 'gemini') ? 'block' : 'none';
-            if (document.getElementById('anthropic-key-block')) document.getElementById('anthropic-key-block').style.display = (provider === 'anthropic') ? 'block' : 'none';
+            const providers = ['openai', 'gemini', 'anthropic'];
+            providers.forEach(p => {{
+                const block = document.getElementById(p + '-key-block');
+                const badge = document.getElementById('badge-' + p);
+                if (p === provider) {{
+                    if (block) {{
+                        block.style.borderColor = 'rgba(0,242,254,0.4)';
+                        block.style.background = 'rgba(0,242,254,0.04)';
+                    }}
+                    if (badge) {{
+                        badge.textContent = '⭐ PRIMARY';
+                        badge.style.background = 'rgba(0,255,136,0.15)';
+                        badge.style.color = 'var(--accent-green)';
+                        badge.style.border = '1px solid rgba(0,255,136,0.3)';
+                    }}
+                }} else {{
+                    if (block) {{
+                        block.style.borderColor = 'rgba(255,255,255,0.07)';
+                        block.style.background = 'rgba(0,0,0,0.2)';
+                    }}
+                    if (badge) {{
+                        badge.textContent = '🔄 FALLBACK';
+                        badge.style.background = 'rgba(255,255,255,0.06)';
+                        badge.style.color = 'var(--text-muted)';
+                        badge.style.border = '1px solid rgba(255,255,255,0.1)';
+                    }}
+                }}
+            }});
             
             fullConfig.llm = fullConfig.llm || {{}};
             fullConfig.llm.primary = fullConfig.llm.primary || {{}};

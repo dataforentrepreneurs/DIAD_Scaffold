@@ -11,7 +11,10 @@
 param(
     [switch]$SkipBrowser,
     [string]$InstallDir = "DIAD",
-    [string]$ZipUrl = ""
+    [string]$ZipUrl = "",
+    [string]$BusinessName = $env:DIAD_BIZ,
+    [string]$WebsiteUrl = $env:DIAD_URL,
+    [string]$ContactEmail = $env:DIAD_EMAIL
 )
 
 $ErrorActionPreference = "Stop"
@@ -270,6 +273,35 @@ Write-Ok "Dependencies installed."
 
 # -- STEP 6: Launch Dashboard ------------------------------------------------
 Write-Step "6/6" "Launching DIAD Onboarding Dashboard ..."
+
+# Automatically sync business details into config if provided via activation
+$effectiveBiz = if ($BusinessName) { $BusinessName } else { $env:DIAD_BIZ }
+$effectiveUrl = if ($WebsiteUrl) { $WebsiteUrl } else { $env:DIAD_URL }
+$effectiveEmail = if ($ContactEmail) { $ContactEmail } else { $env:DIAD_EMAIL }
+
+$cfgPath = "config/client_rawdata.json"
+if (Test-Path $cfgPath) {
+    try {
+        $cfgJson = Get-Content $cfgPath -Raw | ConvertFrom-Json
+        $dirty = $false
+        if ($effectiveBiz -and $effectiveBiz -ne "YOUR_BUSINESS_NAME" -and $cfgJson.client.business_name -ne $effectiveBiz) {
+            $cfgJson.client.business_name = $effectiveBiz
+            $dirty = $true
+        }
+        if ($effectiveUrl -and $effectiveUrl -ne "https://your-website.com/" -and $cfgJson.client.website_url -ne $effectiveUrl) {
+            $cfgJson.client.website_url = $effectiveUrl
+            $dirty = $true
+        }
+        if ($effectiveEmail -and $cfgJson.client.business_email -ne $effectiveEmail) {
+            $cfgJson.client.business_email = $effectiveEmail
+            $dirty = $true
+        }
+        if ($dirty) {
+            $cfgJson | ConvertTo-Json -Depth 25 | Set-Content $cfgPath -Encoding UTF8
+            Write-Ok "Autofilled Business Profile for '$effectiveBiz' ($effectiveUrl)"
+        }
+    } catch {}
+}
 
 # Force-kill any existing dashboard server process to guarantee fresh code reload
 Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*onboarding_dashboard.py*" } | ForEach-Object {

@@ -129,28 +129,28 @@ def main() -> None:
     logging.info("RAG mode   : %s", rag_mode)
     logging.info("Repo root  : %s", ROOT_DIR)
 
-    # 0) Pre-flight Setup: Ensure datasets and raw e-commerce data exist
-    run_step(
-        "Phase 1D – Bootstrap BigQuery Resources & GCS Storage",
-        [sys.executable, "scripts/1_4_bootstrap_resources.py"],
-        cwd=ROOT_DIR,
-    )
-
-    run_step(
-        "Phase 3.1 – Ingest E-Commerce Raw Data & Seeds",
-        [sys.executable, "scripts/3_1_ingest_ecommerce.py"],
-        cwd=ROOT_DIR,
-    )
-
-    # 1) Phase 6A – dbt (unless skipped)
+    # 0) Pre-flight Setup: Ensure datasets and raw e-commerce data exist (only when running full standalone flow)
     if not args.skip_6a:
+        run_step(
+            "Phase 1D – Bootstrap BigQuery Resources & GCS Storage",
+            [sys.executable, "scripts/1_4_bootstrap_resources.py"],
+            cwd=ROOT_DIR,
+        )
+
+        run_step(
+            "Phase 3.1 – Ingest E-Commerce Raw Data & Seeds",
+            [sys.executable, "scripts/3_1_ingest_ecommerce.py"],
+            cwd=ROOT_DIR,
+        )
+
+        # 1) Phase 6A – dbt
         run_step(
             "Phase 6A – dbt run (6_1_run_dbt.py --mode full)",
             [sys.executable, "scripts/6_1_run_dbt.py", "--mode", "full"],
             cwd=ROOT_DIR,
         )
     else:
-        logging.info("Skipping Phase 6A dbt run because --skip-6a was provided.")
+        logging.info("Skipping Phase 1D, 3.1, and 6A (--skip-6a provided: upstream pipeline steps already executed).")
 
     # 2) Phase 7 – common steps (both modes)
     run_step(

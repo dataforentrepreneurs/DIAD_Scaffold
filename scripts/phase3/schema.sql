@@ -37,7 +37,9 @@ CREATE OR REPLACE TABLE `{canonical_dataset}.dim_customer` (
   source_system STRING,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
-  is_deleted BOOL
+  is_deleted BOOL,
+  primary_uid STRING,
+  primary_phone_e164 STRING
 );
 
 CREATE OR REPLACE TABLE `{canonical_dataset}.warehouse` (

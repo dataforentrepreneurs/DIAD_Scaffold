@@ -75,7 +75,9 @@ SELECT
   source_system,
   TIMESTAMP(created_at),
   TIMESTAMP(updated_at),
-  CAST(is_deleted AS BOOL)
+  CAST(is_deleted AS BOOL),
+  CAST(NULL AS STRING) AS primary_uid,
+  CAST(NULL AS STRING) AS primary_phone_e164
 FROM `{PROJECT}.{RAW_DS}.dim_customer`
 """)
 

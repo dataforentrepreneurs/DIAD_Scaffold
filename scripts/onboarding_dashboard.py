@@ -245,13 +245,13 @@ def get_config_data():
         example_path = CONFIG_DIR / "client_rawdata.json.example"
         if example_path.exists():
             try:
-                with open(example_path, "r", encoding="utf-8") as f:
+                with open(example_path, "r", encoding="utf-8-sig") as f:
                     return json.load(f)
             except Exception:
                 pass
         return {}
     try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        with open(CONFIG_PATH, "r", encoding="utf-8-sig") as f:
             return json.load(f)
     except Exception as e:
         print(f"Error reading config: {e}")
@@ -965,6 +965,39 @@ async def get_dashboard():
     </style>
 </head>
 <body>
+    <!-- Brand Intro Video Modal -->
+    <div id="brand-video-modal" style="display: none; position: fixed; inset: 0; background: rgba(5, 7, 15, 0.88); backdrop-filter: blur(10px); z-index: 99999; align-items: center; justify-content: center; padding: 1.25rem;">
+        <div style="background: var(--bg-secondary); border: 1px solid rgba(0, 242, 254, 0.4); border-radius: 12px; width: 100%; max-width: 820px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 242, 254, 0.2); overflow: hidden; display: flex; flex-direction: column;">
+            <div style="padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); background: rgba(0, 242, 254, 0.04);">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span style="font-size: 1.3rem;">🎬</span>
+                    <div>
+                        <div style="font-weight: 700; font-size: 1.05rem; color: #fff; font-family: 'Outfit', sans-serif;">DIAD – AI Data Platform for Entrepreneurs</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Platform architecture, data pipeline, and AI storefront overview</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBrandVideoModal()" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; font-size: 1.1rem; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">✕</button>
+            </div>
+            <div style="position: relative; background: #000; width: 100%; aspect-ratio: 16/9; max-height: 440px;">
+                <video id="modal-video-player" controls playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                    <source src="/assets/brand_video.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div style="padding: 0.9rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; background: rgba(0, 0, 0, 0.35); border-top: 1px solid var(--card-border);">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; user-select: none;">
+                    <input type="checkbox" id="dont-show-video-again" onchange="toggleAutoShowVideo(this.checked)" style="accent-color: var(--accent-cyan); cursor: pointer;">
+                    Don't auto-launch video on next startup
+                </label>
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <button type="button" class="btn" onclick="closeBrandVideoModal()" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); color: #fff; font-weight: 700; padding: 0.5rem 1.35rem; font-size: 0.82rem; border-radius: 6px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.3);">
+                        Proceed to Onboarding Suite →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header>
         <div class="logo-container" style="display: flex; align-items: center; gap: 0.75rem;">
             <div class="logo-glow"></div>
@@ -978,6 +1011,12 @@ async def get_dashboard():
             <div class="status-pill">
                 GCP Project: <span id="gcp-project-status">{project_id}</span>
             </div>
+            <button type="button" onclick="openBrandVideoModal(false)" class="status-pill" style="border: 1px solid rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                🎬 Brand Video
+            </button>
+            <a href="/landing" target="_blank" class="status-pill" style="border: 1px solid rgba(44, 182, 125, 0.35); background: rgba(44, 182, 125, 0.15); color: var(--accent-cyan); text-decoration: none; font-weight: 600; cursor: pointer;">
+                ⚡ 1-Click Installer (/landing) ↗
+            </a>
             <a href="/portal" target="_blank" class="status-pill" style="border: 1px solid var(--card-border); background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); text-decoration: none; font-weight: 600; cursor: pointer;">
                 🌐 Public Portal (/portal) ↗
             </a>
@@ -1003,6 +1042,42 @@ async def get_dashboard():
             <div class="panel-scrollable" style="flex: 1; overflow-y: auto; min-height: 0; padding-right: 0.5rem;">
                 <!-- TAB 1: Business & GCP Account Setup -->
                 <div id="gcp-tab" class="tab-content active">
+                    <!-- Brand Video Hero Showcase -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.06), rgba(127, 90, 240, 0.08)); border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.2rem;">🎬</span>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.95rem; color: var(--accent-cyan); font-family: 'Outfit', sans-serif;">DIAD Platform Tour & Architecture</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Watch the intro video before configuring your Google Cloud tenant</div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="openBrandVideoModal(false)" style="background: rgba(0, 242, 254, 0.15); border: 1px solid rgba(0, 242, 254, 0.4); color: var(--accent-cyan); font-weight: 600; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s;">
+                                ⛶ Theater View
+                            </button>
+                        </div>
+                        <div style="position: relative; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--card-border); max-height: 360px;">
+                            <video id="inline-brand-video" controls playsinline preload="metadata" style="width: 100%; max-height: 360px; display: block; object-fit: contain;">
+                                <source src="/assets/brand_video.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        <div style="margin-top: 0.65rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                            <span>Zero-telemetry self-hosted customer intelligence, dbt analytical marts & AI chatbots.</span>
+                            <span style="color: var(--accent-green); font-weight: 600;">✓ Ready to stream</span>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Client Onboarding Banner -->
+                    <div style="background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="font-size: 0.8rem; color: #cbd5e1;">
+                            <span style="color: var(--accent-cyan); font-weight: 700;">⚡ 1-Click Installer & Client Consent:</span> Open client registration page to configure brand identity, upload logo, and download tailored <code>setup.bat</code>.
+                        </div>
+                        <a href="/landing" target="_blank" class="btn" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 700; padding: 0.35rem 0.85rem; font-size: 0.75rem; border-radius: 6px; text-decoration: none;">
+                            Launch 1-Click Installer ↗
+                        </a>
+                    </div>
+
                     <!-- Business Profile Form Card -->
                     <div style="background: rgba(127,90,240,0.05); border: 1px solid rgba(127,90,240,0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                         <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-purple); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
@@ -1130,15 +1205,24 @@ async def get_dashboard():
 
                     <!-- Google Drive Sharing Card -->
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; cursor: pointer;" onclick="explainSource('gdrive')">
-                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-cyan); display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="display: flex; align-items: center; gap: 0.5rem;">📁 1. Share Google Drive Knowledge Base</span>
+                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-cyan); display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                📁 1. Share Google Drive Knowledge Base
+                                <span style="font-size: 0.7rem; color: var(--accent-green); background: rgba(44,182,125,0.15); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(44,182,125,0.3); font-weight: 600;">
+                                    ⚡ Incremental Sync Active (Pulls ONLY on Changes)
+                                </span>
+                            </span>
                             <a href="https://drive.google.com/" target="_blank" class="btn" onclick="event.stopPropagation();" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 4px; background: var(--accent-purple); color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
                                 🚀 Open Google Drive ↗
                             </a>
                         </div>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.75rem;">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.5rem;">
                             Your AI assistant indexes all company policies, procedures, and operational documents stored in your Google Drive folder.
                         </p>
+                        <!-- Incremental Change Detection Highlight -->
+                        <div style="background: rgba(44, 182, 125, 0.08); border: 1px solid rgba(44, 182, 125, 0.25); border-radius: 6px; padding: 0.55rem 0.75rem; margin-bottom: 0.75rem; font-size: 0.76rem; color: #cbd5e1; line-height: 1.4;">
+                            <strong style="color: var(--accent-green);">🔄 Zero-Waste Ingestion:</strong> Google Drive is pulled <strong>only when changes are made</strong>. DIAD inspects document SHA-256 hashes and <code>modifiedTime</code> timestamps. Unchanged files are never re-vectorized or billed twice.
+                        </div>
 
                         <!-- Recommended Documents Grid Box -->
                         <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem;">
@@ -1381,6 +1465,72 @@ async def get_dashboard():
                             <li>Select your GCP Region (e.g. <code>asia-southeast1</code> or <code>us-central1</code>).</li>
                             <li>Turn ON the export toggles for <strong>Google Analytics</strong> (check <em>Include Sessions</em>), <strong>Firestore</strong>, <strong>Crashlytics</strong>, and <strong>Performance Monitoring</strong>, then click <strong>Submit</strong>.</li>
                         </ol>
+                    </div>
+
+                    <!-- Cloud Operating Cost Estimator (Interactive) -->
+                    <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 8px; padding: 1.25rem; margin-top: 1.25rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--accent-cyan); display: flex; align-items: center; gap: 0.4rem;">
+                                <span>💰 Cloud Cost Transparency Calculator</span>
+                            </div>
+                            <span style="font-size: 0.72rem; color: var(--accent-green); background: rgba(44,182,125,0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(44,182,125,0.3); font-weight: 600;">
+                                ⚡ GCP Free Tier: 2M req/mo & 10GB BQ Included
+                            </span>
+                        </div>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 1rem;">
+                            Estimate your sovereign Google Cloud infrastructure bills based on your store's data size and query volume. 100% direct billing to GCP with zero vendor markup.
+                        </p>
+
+                        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.25rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <div style="margin-bottom: 0.85rem;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: #fff; margin-bottom: 0.25rem;">
+                                        <span>Monthly Orders:</span>
+                                        <strong id="tab3-disp-orders" style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">2,500 orders/mo</strong>
+                                    </div>
+                                    <input type="range" id="tab3-orders-slider" min="100" max="25000" step="100" value="2500" style="width: 100%; accent-color: var(--accent-cyan);" oninput="updateTab3CostCalculator()">
+                                </div>
+                                <div style="margin-bottom: 0.85rem;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: #fff; margin-bottom: 0.25rem;">
+                                        <span>Daily AI Queries (Customer + Staff):</span>
+                                        <strong id="tab3-disp-queries" style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">150 queries/day</strong>
+                                    </div>
+                                    <input type="range" id="tab3-queries-slider" min="10" max="3000" step="10" value="150" style="width: 100%; accent-color: var(--accent-cyan);" oninput="updateTab3CostCalculator()">
+                                </div>
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: #fff; margin-bottom: 0.25rem;">
+                                        <span>Google Drive Knowledge Docs:</span>
+                                        <strong id="tab3-disp-docs" style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">35 documents</strong>
+                                    </div>
+                                    <input type="range" id="tab3-docs-slider" min="5" max="300" step="5" value="35" style="width: 100%; accent-color: var(--accent-cyan);" oninput="updateTab3CostCalculator()">
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 6px; padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div style="font-size: 0.76rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted);">
+                                        <span>Cloud Run:</span>
+                                        <span id="tab3-cost-cloudrun" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 0.00 (Free Tier)</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted);">
+                                        <span>BigQuery Marts:</span>
+                                        <span id="tab3-cost-bq" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 3.20</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted);">
+                                        <span>Secrets & Crons:</span>
+                                        <span id="tab3-cost-secrets" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 0.45</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+                                        <span>AI Token Inference:</span>
+                                        <span id="tab3-cost-ai" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 9.80</span>
+                                    </div>
+                                </div>
+                                <div style="border-top: 1px solid rgba(0,242,254,0.25); padding-top: 0.6rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: baseline;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Total Estimated GCP:</span>
+                                    <strong id="tab3-cost-total" style="font-size: 1.15rem; color: var(--accent-cyan); font-family: 'Outfit', sans-serif;">~S$ 13.45 /mo</strong>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(0,242,254,0.05); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px;">
@@ -1860,8 +2010,63 @@ async def get_dashboard():
         // Store configuration locally
         let fullConfig = {{}};
         let activeEventSource = null;
-        
-                // ==========================================
+        // ==========================================
+        // Tab 3: Interactive Cost Calculator
+        // ==========================================
+        function updateTab3CostCalculator() {{
+            const ordersEl = document.getElementById('tab3-orders-slider');
+            const queriesEl = document.getElementById('tab3-queries-slider');
+            const docsEl = document.getElementById('tab3-docs-slider');
+            if (!ordersEl || !queriesEl || !docsEl) return;
+
+            const orders = parseInt(ordersEl.value) || 2500;
+            const queries = parseInt(queriesEl.value) || 150;
+            const docs = parseInt(docsEl.value) || 35;
+
+            const dispOrders = document.getElementById('tab3-disp-orders');
+            const dispQueries = document.getElementById('tab3-disp-queries');
+            const dispDocs = document.getElementById('tab3-disp-docs');
+            if (dispOrders) dispOrders.textContent = orders.toLocaleString() + ' orders/mo';
+            if (dispQueries) dispQueries.textContent = queries.toLocaleString() + ' queries/day';
+            if (dispDocs) dispDocs.textContent = docs.toLocaleString() + ' documents';
+
+            // 1. Cloud Run (2M free requests)
+            const monthlyRequests = (queries * 30) + (orders * 4);
+            let cloudRunCost = 0.00;
+            if (monthlyRequests > 2000000) {{
+                cloudRunCost = ((monthlyRequests - 2000000) / 1000000) * 0.40;
+            }}
+            const crEl = document.getElementById('tab3-cost-cloudrun');
+            if (crEl) crEl.textContent = cloudRunCost === 0 ? 'S$ 0.00 (Free Tier)' : `S$ ${{cloudRunCost.toFixed(2)}}`;
+
+            // 2. BigQuery (10 GB free storage + 1 TB free query tier)
+            const storageGb = (orders * 0.0002) + (docs * 0.001);
+            const queryTb = (queries * 30 * 0.0005);
+            let bqStorageCost = Math.max(0, storageGb - 10) * 0.026;
+            let bqQueryCost = Math.max(0, queryTb - 1.0) * 6.75;
+            let bqTotal = 2.20 + bqStorageCost + bqQueryCost;
+            const bqEl = document.getElementById('tab3-cost-bq');
+            if (bqEl) bqEl.textContent = `S$ ${{bqTotal.toFixed(2)}}`;
+
+            // 3. Secrets & Scheduler
+            const secretsCost = 0.45;
+            const secEl = document.getElementById('tab3-cost-secrets');
+            if (secEl) secEl.textContent = `S$ ${{secretsCost.toFixed(2)}}`;
+
+            // 4. Vector Search & AI Inference (Incremental Google Drive sync embeds only modified docs)
+            const monthlyEmbeddings = (docs * 0.05 * 0.0001);
+            const llmCost = (queries * 30) * 0.0022;
+            const aiTotal = Math.max(2.50, monthlyEmbeddings + llmCost);
+            const aiEl = document.getElementById('tab3-cost-ai');
+            if (aiEl) aiEl.textContent = `S$ ${{aiTotal.toFixed(2)}}`;
+
+            // Total
+            const totalCost = cloudRunCost + bqTotal + secretsCost + aiTotal;
+            const totEl = document.getElementById('tab3-cost-total');
+            if (totEl) totEl.textContent = `~S$ ${{totalCost.toFixed(2)}} /mo`;
+        }}
+
+        // ==========================================
         // Tab 6: Cadence & Schedule Management
         // ==========================================
         function onFrequencyChange(prefix, val) {{
@@ -2803,9 +3008,54 @@ async def get_dashboard():
             }}, 4000);
         }}
 
+        // ==========================================
+        // Brand Video Modal & Auto-Start
+        // ==========================================
+        function checkAutoShowBrandVideo() {{
+            const hideAuto = localStorage.getItem('diad_hide_intro_video');
+            const dontShowCheckbox = document.getElementById('dont-show-video-again');
+            if (dontShowCheckbox && hideAuto) {{
+                dontShowCheckbox.checked = true;
+            }}
+            if (!hideAuto) {{
+                openBrandVideoModal(true);
+            }}
+        }}
+
+        function openBrandVideoModal(isAuto = false) {{
+            const modal = document.getElementById('brand-video-modal');
+            const player = document.getElementById('modal-video-player');
+            if (modal) modal.style.display = 'flex';
+            if (player) {{
+                if (isAuto) {{
+                    player.muted = true; // Required by modern browsers for unprompted autoplay
+                }}
+                player.play().catch(e => console.log('Autoplay deferred until user interaction:', e));
+            }}
+        }}
+
+        function closeBrandVideoModal() {{
+            const modal = document.getElementById('brand-video-modal');
+            const player = document.getElementById('modal-video-player');
+            if (player) {{
+                player.pause();
+            }}
+            if (modal) modal.style.display = 'none';
+        }}
+
+        function toggleAutoShowVideo(dontShow) {{
+            if (dontShow) {{
+                localStorage.setItem('diad_hide_intro_video', 'true');
+            }} else {{
+                localStorage.removeItem('diad_hide_intro_video');
+            }}
+        }}
+
         // Setup Drag & Drop listeners
         window.addEventListener('DOMContentLoaded', () => {{
             loadConfig();
+            updateTab3CostCalculator();
+            checkAutoShowBrandVideo();
             
             const dropZone = document.getElementById('drop-zone');
             if (dropZone) {{

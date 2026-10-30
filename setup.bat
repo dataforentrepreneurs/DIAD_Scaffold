@@ -9,7 +9,7 @@ echo.
 :: 1. If running directly inside a DIAD project directory, launch immediately!
 if exist "scripts\onboarding_dashboard.py" (
     echo [INFO] Running from current DIAD directory: %CD%
-    powershell -ExecutionPolicy Bypass -File .\setup.ps1
+    powershell -ExecutionPolicy Bypass -File .\setup.ps1 %*
     if errorlevel 1 pause
     exit /b
 )
@@ -26,7 +26,7 @@ rmdir /s /q "%USERPROFILE%\DIAD" 2>nul
 :check_version
 if not exist "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" goto do_download
 
-findstr /c:"Sync Cadence" "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" >nul 2>&1
+findstr /c:"brand-video-modal" "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" >nul 2>&1
 if errorlevel 1 goto do_upgrade
 goto run_setup
 
@@ -42,7 +42,7 @@ cd /d "%USERPROFILE%\DIAD"
 
 echo.
 echo [INFO] Launching DIAD setup engine...
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
+powershell -ExecutionPolicy Bypass -File .\setup.ps1 %*
 if errorlevel 1 (
     echo.
     echo [ERROR] Setup encountered an issue. See details above.

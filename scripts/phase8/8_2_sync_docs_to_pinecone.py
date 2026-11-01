@@ -195,6 +195,66 @@ def build_drive_service(service_account_key_path: str):
     return service
 
 
+def discover_shared_drive_folders(service_account_key_path: str) -> List[str]:
+    """
+    Dynamically discover all Google Drive folders shared with the Service Account at runtime
+    when no hardcoded folder IDs are specified in config/client_rawdata.json.
+    """
+    try:
+        service = build_drive_service(service_account_key_path)
+        resp = (
+            service.files()
+            .list(
+                q="mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+                fields="files(id, name)",
+                pageSize=50,
+            )
+            .execute()
+        )
+        folders = resp.get("files", [])
+        folder_ids = [f["id"] for f in folders if f.get("id")]
+        if folder_ids:
+            logger.info(
+                "🔎 Auto-discovered %d shared Google Drive folder(s) at runtime: %s",
+                len(folder_ids),
+                [(f.get("name"), f.get("id")) for f in folders],
+            )
+        return folder_ids
+    except Exception as e:
+        logger.warning("⚠ Runtime Google Drive folder auto-discovery failed: %s", e)
+        return []
+
+
+def discover_shared_notion_pages(api_key: str) -> List[str]:
+    """
+    Dynamically discover top-level Notion pages shared with the Notion Integration token at runtime
+    when no hardcoded Notion page IDs are specified in config/client_rawdata.json.
+    """
+    try:
+        resp = requests.post(
+            "https://api.notion.com/v1/search",
+            headers=notion_headers(api_key),
+            json={"filter": {"value": "page", "property": "object"}, "page_size": 50},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        results = resp.json().get("results", [])
+        # Prefer workspace-level / root shared pages
+        root_ids = [
+            r.get("id")
+            for r in results
+            if r.get("id") and r.get("parent", {}).get("type") == "workspace"
+        ]
+        if not root_ids:
+            root_ids = [r.get("id") for r in results if r.get("id")]
+        if root_ids:
+            logger.info("🔎 Auto-discovered %d shared Notion parent page(s) at runtime.", len(root_ids))
+        return root_ids
+    except Exception as e:
+        logger.warning("⚠ Runtime Notion page auto-discovery failed: %s", e)
+        return []
+
+
 def crawl_drive_folder(service, folder_id: str) -> List[Dict]:
     """
     Crawl a folder in Google Drive and return documents (id, name, mimeType).
@@ -934,13 +994,11 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
         logger.info("Embedding model: %s", doc_rag.get("embedding_model"))
 
     pinecone_index_name = doc_rag.get("index_name")
-
-    if not pinecone_index_name:
-        raise ValueError("document_rag.index_name is missing!")
+    if not pinecone_index_name or pinecone_index_name == "YOUR_PINECONE_INDEX_NAME":
+        pinecone_index_name = "diad-docs-hf"
 
     logger.info(f"Using Pinecone index: {pinecone_index_name}")
 
-    # Extract credentials
     # Extract credentials with resilient fallbacks
     sa_candidates = [
         cfg.get("gcp", {}).get("service_account_key_path"),
@@ -954,22 +1012,43 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
             sa_json = cand
             break
 
-    notion_key  = os.getenv("NOTION_API_KEY")
-    conf_base   = conf_cfg.get("base_url")
-    conf_user   = conf_cfg.get("username")
-    conf_token  = os.getenv("CONFLUENCE_API_TOKEN")
-    pinecone_key = os.getenv("PINECONE_API_KEY")
-    openai_key   = os.getenv("OPENAI_API_KEY")
+    project_id = client_cfg.get("project_id") or ""
 
-    if not pinecone_key:
-        try:
-            import subprocess
-            pinecone_key = subprocess.check_output(
-                "gcloud secrets versions access latest --secret=PINECONE_API_KEY --project=diamante-diad",
-                shell=True
-            ).decode().strip()
-        except Exception:
-            pass
+    def _fetch_secret_runtime(secret_names: List[str]) -> Optional[str]:
+        if not project_id or project_id in ("Not Configured", "YOUR_PROJECT_ID"):
+            return None
+        import subprocess
+        for sname in secret_names:
+            try:
+                val = subprocess.check_output(
+                    f"gcloud secrets versions access latest --secret={sname} --project={project_id}",
+                    shell=True,
+                    stderr=subprocess.DEVNULL,
+                ).decode().strip()
+                if val:
+                    return val
+            except Exception:
+                continue
+        return None
+
+    notion_key   = os.getenv("NOTION_API_KEY") or os.getenv("NOTION_TOKEN") or _fetch_secret_runtime(["NOTION_TOKEN", "NOTION_API_KEY"])
+    conf_base    = conf_cfg.get("base_url")
+    conf_user    = conf_cfg.get("username")
+    conf_token   = os.getenv("CONFLUENCE_API_TOKEN") or os.getenv("CONFLUENCE_TOKEN") or _fetch_secret_runtime(["CONFLUENCE_TOKEN", "CONFLUENCE_API_TOKEN"])
+    pinecone_key = os.getenv("PINECONE_API_KEY") or _fetch_secret_runtime(["PINECONE_API_KEY"])
+    openai_key   = os.getenv("OPENAI_API_KEY") or _fetch_secret_runtime(["OPENAI_API_KEY"])
+
+    # Clean placeholder IDs and auto-discover at runtime
+    drive_ids = [d for d in (drive_ids or []) if d and d not in ("YOUR_DRIVE_FOLDER_ID", "AUTO_DISCOVER", "")]
+    if not drive_ids and sa_json and source in ("all", "gdrive", "drive"):
+        drive_ids = discover_shared_drive_folders(sa_json)
+
+    notion_ids = [n for n in (notion_ids or []) if n and n not in ("YOUR_NOTION_PAGE_ID", "YOUR_NOTION_PARENT_PAGE_ID", "AUTO_DISCOVER", "")]
+    if not notion_ids and notion_key and source in ("all", "notion"):
+        notion_ids = discover_shared_notion_pages(notion_key)
+
+    if conf_id in ("YOUR_CONFLUENCE_PAGE_ID", "YOUR_CONFLUENCE_PARENT_PAGE_ID", "AUTO_DISCOVER", ""):
+        conf_id = None
 
     # Load Pinecone index and embedding provider(s)
     index, index_dim = load_pinecone_index(pinecone_key, pinecone_index_name)

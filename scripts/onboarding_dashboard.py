@@ -1682,52 +1682,6 @@ async def get_dashboard():
                         </div>
                     </div>
 
-                    <!-- Data Readiness, Source Incorporation & Schema Compatibility Card -->
-                    <div id="data-readiness-card" style="margin-top: 1.25rem; background: rgba(17, 25, 40, 0.9); border: 1px solid rgba(46, 196, 182, 0.35); border-radius: 12px; padding: 1.15rem; transition: all 0.3s ease;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.1rem;">🛡️</span>
-                                <strong style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: #fff;">Data Readiness, Source Audit & Schema Compatibility</strong>
-                            </div>
-                            <button type="button" class="btn btn-secondary" onclick="loadDataReadiness(true)" style="padding: 0.3rem 0.75rem; font-size: 0.74rem; border-radius: 6px;">
-                                🔍 Audit Data Sources & Schema
-                            </button>
-                        </div>
-
-                        <!-- Dynamic Schema & Best-Effort AI Banner (Green when clean, Amber only if files/tables fail) -->
-                        <div id="readiness-advisory-banner" style="background: rgba(46, 196, 182, 0.08); border-left: 3px solid var(--success); border-radius: 6px; padding: 0.75rem 0.9rem; margin-bottom: 0.9rem; font-size: 0.78rem; line-height: 1.45; color: #f3f4f6;">
-                            <div id="readiness-advisory-title" style="font-weight: 700; color: var(--success); margin-bottom: 0.25rem;">
-                                ✅ Canonical Schema Verified & Adaptive AI Engine Active
-                            </div>
-                            <div id="readiness-advisory-text" style="color: var(--text-muted);">
-                                All connected database tables and shared knowledge sources are properly structured and incorporated. <em>(Note: If you later connect custom third-party tables or unstructured files that deviate from DIAD's canonical schema, DIAD's AI capabilities will automatically interpret and synthesize as much insight as possible on a best-effort basis.)</em>
-                            </div>
-                        </div>
-
-                        <!-- Incorporated vs Not Incorporated Grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
-                            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(46, 196, 182, 0.25); border-radius: 8px; padding: 0.75rem;">
-                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--success); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
-                                    <span>✅ Incorporated Data Sources (Read)</span>
-                                    <span id="readiness-inc-count" style="font-family: 'JetBrains Mono', monospace;">0</span>
-                                </div>
-                                <div id="readiness-incorporated-list" style="font-size: 0.74rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem;">
-                                    <div>Checking incorporated databases and files...</div>
-                                </div>
-                            </div>
-
-                            <div id="readiness-skipped-box" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(46, 196, 182, 0.25); border-radius: 8px; padding: 0.75rem;">
-                                <div id="readiness-skipped-header" style="font-size: 0.78rem; font-weight: 700; color: var(--success); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
-                                    <span id="readiness-skipped-label">✨ Unread / Skipped Items</span>
-                                    <span id="readiness-skip-count" style="font-family: 'JetBrains Mono', monospace;">0 items</span>
-                                </div>
-                                <div id="readiness-skipped-list" style="font-size: 0.74rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem;">
-                                    <div>Checking skipped or unlinked sources...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--card-border); text-align: center;">
                         <button type="button" class="btn" onclick="switchTab('package-tab')" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 700; padding: 0.75rem 1.75rem; font-size: 0.9rem; border-radius: 8px;">
                             Go to Tab 5: Client Web Package & Integration →
@@ -1737,9 +1691,6 @@ async def get_dashboard():
 
                 <!-- TAB 5: Client Web Package & Integration -->
                 <div id="package-tab" class="tab-content">
-                    <div style="background: rgba(255, 159, 28, 0.08); border: 1px solid rgba(255, 159, 28, 0.35); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.78rem; line-height: 1.45; color: var(--text-muted);">
-                        <strong style="color: var(--warning);">ℹ️ Output & Schema Expectations:</strong> If a chatbot query does not return a specific expected metric or policy, check the <strong>Data Readiness & Source Audit</strong> in Tab 4 to verify which data sources and files were read vs. skipped. Even where your database or shared files are not structured in DIAD's canonical format, our AI engine will interpret available records on a best-effort basis.
-                    </div>
                     <div style="background: rgba(44, 182, 125, 0.08); border: 1px solid rgba(44, 182, 125, 0.3); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem;">
                         <div style="font-weight: 700; font-size: 1.05rem; color: var(--accent-cyan); display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span>📦 Your AI Web Integration & Hand-Off Package</span>
@@ -2025,7 +1976,6 @@ async def get_dashboard():
                         <button type="button" class="btn-faq" onclick="askMentor('api-keys')">🔌 Why do I need API keys?</button>
                         <button type="button" class="btn-faq" onclick="askMentor('pipeline-order')">🔄 What order do I run steps in?</button>
                         <button type="button" class="btn-faq" onclick="askMentor('data-safety')">🔒 Is my data safe on my machine?</button>
-                        <button type="button" class="btn-faq" onclick="askMentor('schema-output')">⚠️ Why is an output missing or approximate?</button>
                     </div>
                     <!-- Mentee Chat Input Box -->
                     <div id="mentor-chat-container" style="display: flex; gap: 0.4rem; margin-top: 0.6rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.6rem;">
@@ -2053,7 +2003,7 @@ async def get_dashboard():
     <!-- Version & Build Timestamp Footer -->
     <footer style="padding: 0.65rem 3rem; background: rgba(11, 15, 25, 0.95); border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; z-index: 90;">
         <div>DIAD Self-Hosted AI Data Platform • Zero-Custody Edition</div>
-        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.6 • Build: 2026-11-02 02:10 SGT (UTC+8)</div>
+        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.7 • Build: 2026-11-02 02:45 SGT (UTC+8)</div>
     </footer>
 
     <!-- Notification Toast -->
@@ -2451,13 +2401,7 @@ async def get_dashboard():
                     answer = "The standard flow is: 1) Upload your JSON key in <strong>GCP Account Setup</strong>, 2) Link your data sources in <strong>Data Sources Link Guide</strong>, 3) Sync your keys in <strong>GCP Secrets Vault</strong>, 4) Sequentially run Steps 1 through 8 on the right.";
                     break;
                 case 'data-safety':
-                    answer = "🔒 <strong>100% Safe & Private.</strong> All dashboard scripts and data run entirely on your local machine and inside your own Google Cloud billing account. No data is stored on third-party servers.";
-                    break;
-                case 'data-safety':
                     answer = "🔒 <strong>100% Safe & Private.</strong> Everything runs locally on your machine and inside your private Google Cloud project. No raw customer records or credentials ever leave your environment!";
-                    break;
-                case 'schema-output':
-                    answer = "⚠️ <strong>Database Schema & File Readiness:</strong> If the chatbot does not return a specific expected output, it is usually because: 1) Your database tables are not structured in DIAD's canonical e-commerce schema, or 2) Certain shared files (like scanned image PDFs or spreadsheets) could not be read. Check the <strong>Data Readiness & Source Audit</strong> panel in Tab 4 to see which sources are incorporated vs. skipped. Even with non-standard schemas, our AI capabilities will still interpret as much as possible on a best-effort basis!";
                     break;
                 default:
                     answer = "I'm here to guide you step-by-step. Ask any question in the chat box below!";
@@ -2925,7 +2869,6 @@ async def get_dashboard():
                         }}
                         onboardingState = 'complete';
                         updateOnboardingGuidance();
-                        loadDataReadiness();
                         showToast("🎉 All Pipeline Steps Completed Successfully!", "success");
                         activeEventSource.close();
                         activeEventSource = null;
@@ -2979,7 +2922,6 @@ async def get_dashboard():
                         
                         // Advance guide stage logically
                         updateOnboardingGuidance();
-                        loadDataReadiness();
                         showToast(`Step ${{stepNum}} complete!`, "success");
                     }}
                     activeEventSource.close();
@@ -3148,104 +3090,9 @@ async def get_dashboard():
                 }}, false);
             }}
 
-            // Load diagnostics & data readiness on page load
+            // Load diagnostics on page load
             loadDiagnostics();
-            loadDataReadiness();
         }});
-
-        // ── Data Readiness & Schema Compatibility Audit Loader ─────────
-        async function loadDataReadiness(manualTrigger = false) {{
-            try {{
-                const resp = await fetch('/api/data-readiness');
-                const data = await resp.json();
-
-                const card = document.getElementById('data-readiness-card');
-                const banner = document.getElementById('readiness-advisory-banner');
-                const advTitle = document.getElementById('readiness-advisory-title');
-                const advText = document.getElementById('readiness-advisory-text');
-                const incList = document.getElementById('readiness-incorporated-list');
-                const skipList = document.getElementById('readiness-skipped-list');
-                const skipBox = document.getElementById('readiness-skipped-box');
-                const skipHeader = document.getElementById('readiness-skipped-header');
-                const skipLabel = document.getElementById('readiness-skipped-label');
-                const incCount = document.getElementById('readiness-inc-count');
-                const skipCount = document.getElementById('readiness-skip-count');
-
-                const incorporated = data.incorporated || [];
-                const skipped = data.skipped || [];
-                const hasIssues = skipped.length > 0;
-
-                if (card) {{
-                    card.style.borderColor = hasIssues ? 'rgba(255, 159, 28, 0.35)' : 'rgba(46, 196, 182, 0.35)';
-                }}
-                if (banner) {{
-                    banner.style.background = hasIssues ? 'rgba(255, 159, 28, 0.08)' : 'rgba(46, 196, 182, 0.08)';
-                    banner.style.borderLeftColor = hasIssues ? 'var(--warning)' : 'var(--success)';
-                }}
-                if (advTitle) {{
-                    advTitle.style.color = hasIssues ? 'var(--warning)' : 'var(--success)';
-                    advTitle.textContent = hasIssues
-                        ? '⚠️ Database Structure & File Readiness Advisory (AI Best-Effort Interpretation Active)'
-                        : '✅ Canonical Schema Verified & Adaptive AI Engine Active';
-                }}
-                if (advText && data.advisory) {{
-                    advText.innerHTML = data.advisory;
-                }}
-
-                if (incCount) incCount.textContent = `${{incorporated.length}} sources`;
-                if (skipCount) skipCount.textContent = `${{skipped.length}} items`;
-
-                if (skipBox) {{
-                    skipBox.style.borderColor = hasIssues ? 'rgba(255, 159, 28, 0.25)' : 'rgba(46, 196, 182, 0.25)';
-                }}
-                if (skipHeader) {{
-                    skipHeader.style.color = hasIssues ? 'var(--warning)' : 'var(--success)';
-                }}
-                if (skipLabel) {{
-                    skipLabel.textContent = hasIssues ? '⚠️ Not Incorporated / Unreadable' : '✨ Unread / Skipped Items';
-                }}
-
-                if (incList) {{
-                    if (incorporated.length === 0) {{
-                        incList.innerHTML = '<div style="color: var(--text-dark);">No data sources incorporated yet. Run the pipeline steps above.</div>';
-                    }} else {{
-                        incList.innerHTML = incorporated.map(item => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0.4rem; background: rgba(46, 196, 182, 0.06); border-radius: 4px; border-left: 2px solid var(--success);">
-                                <span style="color: #fff; font-weight: 500;">${{escapeHtml(item.name)}}</span>
-                                <span style="color: var(--success); font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;">${{escapeHtml(item.detail)}}</span>
-                            </div>
-                        `).join('');
-                    }}
-                }}
-
-                if (skipList) {{
-                    if (skipped.length === 0) {{
-                        skipList.innerHTML = `
-                            <div style="padding: 0.5rem 0.6rem; background: rgba(46, 196, 182, 0.06); border-radius: 6px; border-left: 2px solid var(--success); color: var(--success); font-weight: 500;">
-                                ✅ 0 Unread or Skipped Items — 100% of configured database tables and shared knowledge sources are structured and incorporated!
-                            </div>
-                        `;
-                    }} else {{
-                        skipList.innerHTML = skipped.map(item => `
-                            <div style="padding: 0.3rem 0.45rem; background: rgba(255, 159, 28, 0.06); border-radius: 4px; border-left: 2px solid var(--warning);">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="color: #fff; font-weight: 500;">${{escapeHtml(item.name)}}</span>
-                                    <span style="color: var(--warning); font-size: 0.66rem; font-family: 'JetBrains Mono', monospace;">${{escapeHtml(item.category || 'Not Read')}}</span>
-                                </div>
-                                <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem;">${{escapeHtml(item.reason)}}</div>
-                            </div>
-                        `).join('');
-                    }}
-                }}
-
-                if (manualTrigger) {{
-                    appendTerminalLog(`[AUDIT] Data Readiness & Schema Compatibility check complete: ${{incorporated.length}} incorporated sources, ${{skipped.length}} skipped/unreadable items.`);
-                    showToast(hasIssues ? "Audit complete: Review skipped items." : "✅ Audit complete: 100% of sources verified!", hasIssues ? "warning" : "success");
-                }}
-            }} catch(e) {{
-                console.error('Data readiness check failed:', e);
-            }}
-        }}
 
         // ── Diagnostics Loader ──────────────────────────────────────────
         async function loadDiagnostics() {{
@@ -3549,6 +3396,20 @@ async def upload_key(payload: KeyUploadPayload):
         cfg = get_config_data()
         cfg["client"] = cfg.get("client", {})
         cfg["client"]["project_id"] = project_id
+        
+        # Dynamically populate bucket and Pinecone defaults at runtime if still placeholders
+        cfg["client"]["export"] = cfg["client"].get("export", {})
+        if cfg["client"]["export"].get("bucket") in (None, "", "YOUR_GCS_BUCKET_NAME"):
+            cfg["client"]["export"]["bucket"] = f"{project_id}-storage"
+        cfg["ingest"] = cfg.get("ingest", {})
+        if cfg["ingest"].get("bucket") in (None, "", "YOUR_GCS_BUCKET_NAME"):
+            cfg["ingest"]["bucket"] = f"{project_id}-storage"
+        cfg["document_rag"] = cfg.get("document_rag", {})
+        if cfg["document_rag"].get("index_name") in (None, "", "YOUR_PINECONE_INDEX_NAME"):
+            cfg["document_rag"]["index_name"] = "diad-docs-hf"
+        cfg["rag"] = cfg.get("rag", {})
+        if cfg["rag"].get("index_name") in (None, "", "YOUR_PINECONE_DOSSIERS_INDEX_NAME"):
+            cfg["rag"]["index_name"] = "diad-order-dossiers-hf"
         
         cfg["gcp"] = cfg.get("gcp", {})
         cfg["gcp"]["service_account_key_path"] = "keys/client-service-account.json"
@@ -3918,16 +3779,6 @@ async def run_onboarding_step(step: str):
         
         if overall_success:
             yield f"data: \n\n"
-            yield f"data: ==================================================================\n\n"
-            yield f"data: [WARNING] SCHEMA & DATA READINESS ADVISORY:\n\n"
-            yield f"data:   • If certain chatbot queries do not return the exact desired output,\n\n"
-            yield f"data:     your source database or shared files may not be structured in the\n\n"
-            yield f"data:     canonical schema required by the system, or some files could not be read.\n\n"
-            yield f"data:   • Review the 'Data Readiness & Source Audit' panel in Tab 4 to see\n\n"
-            yield f"data:     which data sources & files are Incorporated vs. Not Incorporated.\n\n"
-            yield f"data:   • Even where data is not structured in the desired canonical format,\n\n"
-            yield f"data:     DIAD's AI capabilities will still interpret as much as possible.\n\n"
-            yield f"data: ==================================================================\n\n"
             yield f"data: [SUCCESS] Step completed successfully (exit code 0).\n\n"
             yield f"data: Process finished with exit code 0\n\n"
         else:

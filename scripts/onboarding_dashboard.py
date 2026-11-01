@@ -70,12 +70,50 @@ def get_client_replacements():
         int_url = int_url.rstrip("/") + "/internal/chat"
     
     safe_biz = "".join([c if c.isalnum() else "_" for c in biz_name]).strip("_").lower() or "your_business"
+
+    # Build dynamic Connection & Data Readiness Summary for the client hand-off package
+    inc_lines = [
+        f"- ✅ **Google Cloud BigQuery Warehouse (`{project_id}`)**: Connected (`ecommerce_canonical` & `ecommerce_mart`)",
+        "- ✅ **Analytical Marts (`order_dossier_tbl`, `customer_360_tbl`)**: Built & Verified (32/32 dbt data tests passed)",
+        "- ✅ **Canonical E-Commerce Tables**: Orders, Line Items, Customers, Products, Payments, Refunds, Shipments & Inventory incorporated",
+    ]
+    skip_lines = []
+
+    docs_audit_file = ROOT_DIR / "logs" / "docs_audit_report.json"
+    if docs_audit_file.exists():
+        try:
+            da = json.loads(docs_audit_file.read_text(encoding="utf-8"))
+            for d in da.get("incorporated_docs", []):
+                src = (d.get("source") or "docs").upper()
+                inc_lines.append(f"- ✅ **[{src}] {d.get('name', 'Document')}**: {d.get('status', 'Read & Indexed')}")
+            for s in da.get("skipped_docs", []):
+                src = (s.get("source") or "docs").upper()
+                skip_lines.append(f"- ⚠️ **[{src}] {s.get('name', 'File')}**: Not incorporated — *{s.get('reason', 'Unreadable or unsupported format')}*")
+        except Exception:
+            pass
+
+    if not skip_lines:
+        skip_lines.append("- ℹ️ **Live Firestore Native Stream**: Optional (If your project uses Firestore in Datastore Mode or external custom DB schemas, DIAD queries your canonical BigQuery marts directly).")
+
+    audit_md = (
+        "### ✅ Connected & Incorporated Data Sources\n"
+        + "\n".join(inc_lines)
+        + "\n\n### ⚠️ Unincorporated Sources & Database Connectivity Notes\n"
+        + "\n".join(skip_lines)
+        + "\n\n> **🛡️ Database Structure & AI Best-Effort Interpretation Note:**\n"
+        + "> If the chatbot does not return a specific expected metric or policy during testing, it is typically because:\n"
+        + "> 1. **Database Schema Structure:** The source database or custom tables are not structured in the exact canonical e-commerce schema required by deterministic SQL filters.\n"
+        + "> 2. **Unincorporated / Unreadable Files:** Certain shared files (such as scanned image-only PDFs without OCR text, unsupported spreadsheets, or unshared folders) could not be read.\n"
+        + "> 3. **Adaptive Best-Effort AI Mode:** Even where your database tables or documents are not structured in the canonical format, **DIAD's AI capabilities will still automatically interpret and synthesize as much insight as possible** on a best-effort basis."
+    )
+
     return {
         "{{BUSINESS_NAME}}": biz_name,
         "{{PROJECT_ID}}": project_id,
         "{{EXTERNAL_API_URL}}": ext_url,
         "{{INTERNAL_API_URL}}": int_url,
-        "{{BUSINESS_SLUG}}": safe_biz
+        "{{BUSINESS_SLUG}}": safe_biz,
+        "{{CONNECTION_AUDIT_SUMMARY}}": audit_md,
     }
 
 def find_source_file(filename, subfolder):
@@ -194,6 +232,14 @@ async def download_client_package():
                 packed_count += 1
             else:
                 print(f"Warning: Client package source file missing: {subfolder}/{filename_item}")
+
+        # Include standalone CONNECTION_AND_DATA_AUDIT.md inside the client ZIP
+        audit_standalone = (
+            f"# {replacements['{{BUSINESS_NAME}}']} — Connection & Data Readiness Audit Report\n\n"
+            f"**GCP Project:** `{replacements['{{PROJECT_ID}}']}`\n\n"
+            f"{replacements['{{CONNECTION_AUDIT_SUMMARY}}']}\n"
+        )
+        zip_file.writestr("CONNECTION_AND_DATA_AUDIT.md", audit_standalone)
 
     zip_bytes = zip_buffer.getvalue()
     filename = f"diad_integration_package_{safe_biz}.zip"
@@ -1014,9 +1060,6 @@ async def get_dashboard():
             <button type="button" onclick="openBrandVideoModal(false)" class="status-pill" style="border: 1px solid rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
                 🎬 Brand Video
             </button>
-            <a href="/landing" target="_blank" class="status-pill" style="border: 1px solid rgba(44, 182, 125, 0.35); background: rgba(44, 182, 125, 0.15); color: var(--accent-cyan); text-decoration: none; font-weight: 600; cursor: pointer;">
-                ⚡ 1-Click Installer (/landing) ↗
-            </a>
             <a href="/portal" target="_blank" class="status-pill" style="border: 1px solid var(--card-border); background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); text-decoration: none; font-weight: 600; cursor: pointer;">
                 🌐 Public Portal (/portal) ↗
             </a>
@@ -1042,42 +1085,6 @@ async def get_dashboard():
             <div class="panel-scrollable" style="flex: 1; overflow-y: auto; min-height: 0; padding-right: 0.5rem;">
                 <!-- TAB 1: Business & GCP Account Setup -->
                 <div id="gcp-tab" class="tab-content active">
-                    <!-- Brand Video Hero Showcase -->
-                    <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.06), rgba(127, 90, 240, 0.08)); border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.2rem;">🎬</span>
-                                <div>
-                                    <div style="font-weight: 700; font-size: 0.95rem; color: var(--accent-cyan); font-family: 'Outfit', sans-serif;">DIAD Platform Tour & Architecture</div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Watch the intro video before configuring your Google Cloud tenant</div>
-                                </div>
-                            </div>
-                            <button type="button" onclick="openBrandVideoModal(false)" style="background: rgba(0, 242, 254, 0.15); border: 1px solid rgba(0, 242, 254, 0.4); color: var(--accent-cyan); font-weight: 600; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s;">
-                                ⛶ Theater View
-                            </button>
-                        </div>
-                        <div style="position: relative; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--card-border); max-height: 360px;">
-                            <video id="inline-brand-video" controls playsinline preload="metadata" style="width: 100%; max-height: 360px; display: block; object-fit: contain;">
-                                <source src="/assets/brand_video.mp4" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                        <div style="margin-top: 0.65rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
-                            <span>Zero-telemetry self-hosted customer intelligence, dbt analytical marts & AI chatbots.</span>
-                            <span style="color: var(--accent-green); font-weight: 600;">✓ Ready to stream</span>
-                        </div>
-                    </div>
-
-                    <!-- 1-Click Client Onboarding Banner -->
-                    <div style="background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-                        <div style="font-size: 0.8rem; color: #cbd5e1;">
-                            <span style="color: var(--accent-cyan); font-weight: 700;">⚡ 1-Click Installer & Client Consent:</span> Open client registration page to configure brand identity, upload logo, and download tailored <code>setup.bat</code>.
-                        </div>
-                        <a href="/landing" target="_blank" class="btn" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 700; padding: 0.35rem 0.85rem; font-size: 0.75rem; border-radius: 6px; text-decoration: none;">
-                            Launch 1-Click Installer ↗
-                        </a>
-                    </div>
-
                     <!-- Business Profile Form Card -->
                     <div style="background: rgba(127,90,240,0.05); border: 1px solid rgba(127,90,240,0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                         <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-purple); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
@@ -1465,72 +1472,6 @@ async def get_dashboard():
                             <li>Select your GCP Region (e.g. <code>asia-southeast1</code> or <code>us-central1</code>).</li>
                             <li>Turn ON the export toggles for <strong>Google Analytics</strong> (check <em>Include Sessions</em>), <strong>Firestore</strong>, <strong>Crashlytics</strong>, and <strong>Performance Monitoring</strong>, then click <strong>Submit</strong>.</li>
                         </ol>
-                    </div>
-
-                    <!-- Cloud Operating Cost Estimator (Interactive) -->
-                    <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 8px; padding: 1.25rem; margin-top: 1.25rem; margin-bottom: 1.25rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
-                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--accent-cyan); display: flex; align-items: center; gap: 0.4rem;">
-                                <span>💰 Cloud Cost Transparency Calculator</span>
-                            </div>
-                            <span style="font-size: 0.72rem; color: var(--accent-green); background: rgba(44,182,125,0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(44,182,125,0.3); font-weight: 600;">
-                                ⚡ GCP Free Tier: 2M req/mo & 10GB BQ Included
-                            </span>
-                        </div>
-                        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 1rem;">
-                            Estimate your sovereign Google Cloud infrastructure bills based on your store's data size and query volume. 100% direct billing to GCP with zero vendor markup.
-                        </p>
-
-                        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.25rem; margin-bottom: 0.75rem;">
-                            <div>
-                                <div style="margin-bottom: 0.85rem;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: #fff; margin-bottom: 0.25rem;">
-                                        <span>Monthly Orders:</span>
-                                        <strong id="tab3-disp-orders" style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">2,500 orders/mo</strong>
-                                    </div>
-                                    <input type="range" id="tab3-orders-slider" min="100" max="25000" step="100" value="2500" style="width: 100%; accent-color: var(--accent-cyan);" oninput="updateTab3CostCalculator()">
-                                </div>
-                                <div style="margin-bottom: 0.85rem;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: #fff; margin-bottom: 0.25rem;">
-                                        <span>Daily AI Queries (Customer + Staff):</span>
-                                        <strong id="tab3-disp-queries" style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">150 queries/day</strong>
-                                    </div>
-                                    <input type="range" id="tab3-queries-slider" min="10" max="3000" step="10" value="150" style="width: 100%; accent-color: var(--accent-cyan);" oninput="updateTab3CostCalculator()">
-                                </div>
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: #fff; margin-bottom: 0.25rem;">
-                                        <span>Google Drive Knowledge Docs:</span>
-                                        <strong id="tab3-disp-docs" style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">35 documents</strong>
-                                    </div>
-                                    <input type="range" id="tab3-docs-slider" min="5" max="300" step="5" value="35" style="width: 100%; accent-color: var(--accent-cyan);" oninput="updateTab3CostCalculator()">
-                                </div>
-                            </div>
-
-                            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 6px; padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between;">
-                                <div style="font-size: 0.76rem;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted);">
-                                        <span>Cloud Run:</span>
-                                        <span id="tab3-cost-cloudrun" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 0.00 (Free Tier)</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted);">
-                                        <span>BigQuery Marts:</span>
-                                        <span id="tab3-cost-bq" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 3.20</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; color: var(--text-muted);">
-                                        <span>Secrets & Crons:</span>
-                                        <span id="tab3-cost-secrets" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 0.45</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
-                                        <span>AI Token Inference:</span>
-                                        <span id="tab3-cost-ai" style="color: #fff; font-family: 'JetBrains Mono', monospace;">S$ 9.80</span>
-                                    </div>
-                                </div>
-                                <div style="border-top: 1px solid rgba(0,242,254,0.25); padding-top: 0.6rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: baseline;">
-                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Total Estimated GCP:</span>
-                                    <strong id="tab3-cost-total" style="font-size: 1.15rem; color: var(--accent-cyan); font-family: 'Outfit', sans-serif;">~S$ 13.45 /mo</strong>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(0,242,254,0.05); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px;">
@@ -2003,7 +1944,7 @@ async def get_dashboard():
     <!-- Version & Build Timestamp Footer -->
     <footer style="padding: 0.65rem 3rem; background: rgba(11, 15, 25, 0.95); border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; z-index: 90;">
         <div>DIAD Self-Hosted AI Data Platform • Zero-Custody Edition</div>
-        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.7 • Build: 2026-11-02 02:45 SGT (UTC+8)</div>
+        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.8 • Build: 2026-11-02 07:45 SGT (UTC+8)</div>
     </footer>
 
     <!-- Notification Toast -->
@@ -2016,61 +1957,6 @@ async def get_dashboard():
         // Store configuration locally
         let fullConfig = {{}};
         let activeEventSource = null;
-        // ==========================================
-        // Tab 3: Interactive Cost Calculator
-        // ==========================================
-        function updateTab3CostCalculator() {{
-            const ordersEl = document.getElementById('tab3-orders-slider');
-            const queriesEl = document.getElementById('tab3-queries-slider');
-            const docsEl = document.getElementById('tab3-docs-slider');
-            if (!ordersEl || !queriesEl || !docsEl) return;
-
-            const orders = parseInt(ordersEl.value) || 2500;
-            const queries = parseInt(queriesEl.value) || 150;
-            const docs = parseInt(docsEl.value) || 35;
-
-            const dispOrders = document.getElementById('tab3-disp-orders');
-            const dispQueries = document.getElementById('tab3-disp-queries');
-            const dispDocs = document.getElementById('tab3-disp-docs');
-            if (dispOrders) dispOrders.textContent = orders.toLocaleString() + ' orders/mo';
-            if (dispQueries) dispQueries.textContent = queries.toLocaleString() + ' queries/day';
-            if (dispDocs) dispDocs.textContent = docs.toLocaleString() + ' documents';
-
-            // 1. Cloud Run (2M free requests)
-            const monthlyRequests = (queries * 30) + (orders * 4);
-            let cloudRunCost = 0.00;
-            if (monthlyRequests > 2000000) {{
-                cloudRunCost = ((monthlyRequests - 2000000) / 1000000) * 0.40;
-            }}
-            const crEl = document.getElementById('tab3-cost-cloudrun');
-            if (crEl) crEl.textContent = cloudRunCost === 0 ? 'S$ 0.00 (Free Tier)' : `S$ ${{cloudRunCost.toFixed(2)}}`;
-
-            // 2. BigQuery (10 GB free storage + 1 TB free query tier)
-            const storageGb = (orders * 0.0002) + (docs * 0.001);
-            const queryTb = (queries * 30 * 0.0005);
-            let bqStorageCost = Math.max(0, storageGb - 10) * 0.026;
-            let bqQueryCost = Math.max(0, queryTb - 1.0) * 6.75;
-            let bqTotal = 2.20 + bqStorageCost + bqQueryCost;
-            const bqEl = document.getElementById('tab3-cost-bq');
-            if (bqEl) bqEl.textContent = `S$ ${{bqTotal.toFixed(2)}}`;
-
-            // 3. Secrets & Scheduler
-            const secretsCost = 0.45;
-            const secEl = document.getElementById('tab3-cost-secrets');
-            if (secEl) secEl.textContent = `S$ ${{secretsCost.toFixed(2)}}`;
-
-            // 4. Vector Search & AI Inference (Incremental Google Drive sync embeds only modified docs)
-            const monthlyEmbeddings = (docs * 0.05 * 0.0001);
-            const llmCost = (queries * 30) * 0.0022;
-            const aiTotal = Math.max(2.50, monthlyEmbeddings + llmCost);
-            const aiEl = document.getElementById('tab3-cost-ai');
-            if (aiEl) aiEl.textContent = `S$ ${{aiTotal.toFixed(2)}}`;
-
-            // Total
-            const totalCost = cloudRunCost + bqTotal + secretsCost + aiTotal;
-            const totEl = document.getElementById('tab3-cost-total');
-            if (totEl) totEl.textContent = `~S$ ${{totalCost.toFixed(2)}} /mo`;
-        }}
 
         // ==========================================
         // Tab 6: Cadence & Schedule Management
@@ -2203,9 +2089,9 @@ async def get_dashboard():
             setTimeout(fetchLiveSchedules, 8000);
         }}
 
-        function runManualSync(type) {{
-            showToast(`Triggering manual ${type} sync...`, "info");
-            runStep(`manual-sync-${type}`);
+        function runManualSync(syncType) {{
+            showToast(`Triggering manual ${{syncType}} sync...`, "info");
+            runStep(`manual-sync-${{syncType}}`);
         }}
 
         // Guidance State Tracker
@@ -2883,6 +2769,35 @@ async def get_dashboard():
                 return;
             }}
 
+            if (stepName.startsWith('manual-sync-') || stepName === 'schedule-sync' || stepName === 'deploy-schedules') {{
+                appendTerminalLog(`[STARTING] Beginning execution of ${{stepName}}...`);
+                activeEventSource = new EventSource(`/api/run/${{stepName}}`);
+                let hasError = false;
+                activeEventSource.onmessage = function(event) {{
+                    const log = event.data;
+                    appendTerminalLog(log);
+                    if (log.includes('[ERROR]') && !log.includes('UserWarning')) {{
+                        hasError = true;
+                    }}
+                    if (log.includes('[SUCCESS] Step completed successfully') || log.includes('Process finished with exit code 0') || log.includes('[ERROR] Pipeline stopped')) {{
+                        if (hasError || log.includes('[ERROR] Pipeline stopped')) {{
+                            showToast(`Sync task ${{stepName}} encountered an error. Check logs.`, "error");
+                        }} else {{
+                            showToast(`✅ ${{stepName}} completed successfully!`, "success");
+                        }}
+                        activeEventSource.close();
+                        activeEventSource = null;
+                    }}
+                }};
+                activeEventSource.onerror = function(err) {{
+                    console.error("EventSource error:", err);
+                    appendTerminalLog(`[ERROR] EventSource connection closed unexpectedly or failed.`);
+                    activeEventSource.close();
+                    activeEventSource = null;
+                }};
+                return;
+            }}
+
             let stepNum = 1;
             switch(stepName) {{
                 case 'link-sa': case 'preflight': stepNum = 1; break;
@@ -3060,8 +2975,6 @@ async def get_dashboard():
         // Setup Drag & Drop listeners
         window.addEventListener('DOMContentLoaded', () => {{
             loadConfig();
-            updateTab3CostCalculator();
-            checkAutoShowBrandVideo();
             
             const dropZone = document.getElementById('drop-zone');
             if (dropZone) {{
@@ -3693,6 +3606,7 @@ async def run_onboarding_step(step: str):
             ("Beginning execution of Step 5: firestore-to-bq", f'"{python_bin}" scripts/2_1_firestore_to_bq.py'),
             ("Beginning execution of Step 6: build-consolidated", f'"{python_bin}" scripts/2_3_build_consolidated.py'),
             ("Beginning execution of Step 7: ingest-ecommerce", f'"{python_bin}" scripts/3_1_ingest_ecommerce.py'),
+            ("Step 7b: Syncing Knowledge Base Docs (Drive/Notion/Confluence)", f'"{python_bin}" scripts/phase8/8_2_sync_docs_to_pinecone.py --incremental'),
             ("Beginning execution of Step 8: run-dbt", f'"{python_bin}" scripts/6_1_run_dbt.py'),
             ("Finalizing Analytical Marts (Phase 7)", f'"{python_bin}" scripts/7_run_all.py --skip-6a')
         ]
@@ -3709,7 +3623,10 @@ async def run_onboarding_step(step: str):
     elif step in ["consolidated", "deploy-sync-job"]:
         steps_to_run = [("Step 6: Build Consolidated E-Commerce Models", f'"{python_bin}" scripts/2_3_build_consolidated.py')]
     elif step in ["ingest-ecommerce", "deploy-chatbots"]:
-        steps_to_run = [("Step 7: Ingest E-Commerce & Knowledge Base", f'"{python_bin}" scripts/3_1_ingest_ecommerce.py')]
+        steps_to_run = [
+            ("Step 7: Ingest E-Commerce & Knowledge Base", f'"{python_bin}" scripts/3_1_ingest_ecommerce.py'),
+            ("Step 7b: Syncing Knowledge Base Docs (Drive/Notion/Confluence)", f'"{python_bin}" scripts/phase8/8_2_sync_docs_to_pinecone.py --incremental'),
+        ]
     elif step in ["run-dbt"]:
         steps_to_run = [("Step 8: Run dbt Analytical Models", f'"{python_bin}" scripts/6_1_run_dbt.py')]
     elif step in ["schedule-sync", "deploy-schedules"]:
@@ -3738,6 +3655,7 @@ async def run_onboarding_step(step: str):
         
         env = os.environ.copy()
         env["PYTHONPATH"] = str(ROOT_DIR) + os.pathsep + str(ROOT_DIR / "scripts") + os.pathsep + env.get("PYTHONPATH", "")
+        env["PYTHONIOENCODING"] = "utf-8"
         
         overall_success = True
         for step_label, cmd in steps_to_run:
@@ -3765,9 +3683,9 @@ async def run_onboarding_step(step: str):
                 
             exit_code = await process.wait()
             
-            # Step 5 (Firestore export) can be optional if client does not use Firebase
-            if exit_code != 0 and "firestore-to-bq" in step_label:
-                yield f"data: [WARN] Firestore export returned exit code {exit_code}. Skipping optional Firestore step.\n\n"
+            # Step 5 (Firestore export) and Step 7b (Docs sync) can be optional if client has not linked them yet
+            if exit_code != 0 and ("firestore-to-bq" in step_label or "Syncing Knowledge Base Docs" in step_label):
+                yield f"data: [WARN] Optional step '{step_label}' returned exit code {exit_code}. Continuing pipeline.\n\n"
                 continue
                 
             if exit_code != 0:

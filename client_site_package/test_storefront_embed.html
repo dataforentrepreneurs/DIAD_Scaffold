@@ -165,10 +165,31 @@
       </span>
       <span><strong>Safe Local Test Page:</strong> This page simulates your active storefront on your PC without touching your live website.</span>
     </div>
-    <div style="color: #c7d2fe; font-size: 0.85rem; white-space: nowrap;">
-      👉 Look at the <strong>bottom-right corner</strong> & click the chat bubble to test your AI assistant.
+    <div style="display: flex; align-items: center; gap: 0.75rem; white-space: nowrap;">
+      <span style="color: #c7d2fe; font-size: 0.85rem;">
+        👉 Click the <strong>bottom-right chat bubble</strong> to test.
+      </span>
+      <button onclick="document.getElementById('storefront-feedback-box').style.display = document.getElementById('storefront-feedback-box').style.display === 'none' ? 'block' : 'none'" style="background: rgba(255, 159, 28, 0.18); border: 1px solid rgba(255, 159, 28, 0.5); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+        💬 Not Getting Desired Output? Give Feedback & Check Sources
+      </button>
     </div>
   </aside>
+
+  <!-- Collapsible Output Feedback & Schema Readiness Drawer (Shown when client clicks Feedback) -->
+  <div id="storefront-feedback-box" style="display: none; background: #0f172a; border-bottom: 1px solid rgba(255, 159, 28, 0.35); padding: 1.25rem 2rem; color: #e2e8f0; font-size: 0.84rem;">
+    <div style="max-width: 1100px; margin: 0 auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+        <strong style="color: #fbbf24; font-size: 0.95rem;">🛡️ Why Output May Differ & Connected Data Sources Audit</strong>
+        <button onclick="document.getElementById('storefront-feedback-box').style.display='none'" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 0.2rem 0.6rem; border-radius: 4px; cursor: pointer;">Close ✕</button>
+      </div>
+      <p style="color: #cbd5e1; line-height: 1.55; margin-bottom: 0.75rem;">
+        If you are testing the chatbot and not getting a specific desired output, please note:
+        <br>1. <strong>Database Connectivity & Schema Structure:</strong> Your database or custom Firestore/SQL tables may not be structured in the exact canonical e-commerce format required by the system.
+        <br>2. <strong>Unincorporated Files:</strong> Certain shared files (such as scanned image PDFs without text, unsupported spreadsheets, or unshared Drive/Notion pages) may not have been read during sync — check <code>CONNECTION_AND_DATA_AUDIT.md</code> in your ZIP package to see every incorporated vs. unincorporated source.
+        <br>3. <strong>Best-Effort AI Mode:</strong> Even when your data is not structured in the desired way, <strong>DIAD's AI capabilities will still automatically interpret and answer as much as possible</strong> from your available records!
+      </p>
+    </div>
+  </div>
 
   <header>
     <div class="store-brand">{{BUSINESS_NAME}}</div>

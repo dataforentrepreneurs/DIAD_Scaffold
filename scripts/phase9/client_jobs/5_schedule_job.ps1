@@ -102,14 +102,14 @@ function Sync-SchedulerJob {
         --message-body "$Body" `
         --update-headers "Content-Type=application/json" | Out-Null
     }
-    Write-Host "  ✅ [$JobName] ACTIVE -> Schedule: '$Cron' ($Tz)" -ForegroundColor Green
+    Write-Host "  [OK] [$JobName] ACTIVE -> Schedule: '$Cron' ($Tz)" -ForegroundColor Green
   } else {
     if ($exists) {
       Write-Host "Removing disabled scheduler job [$JobName]..." -ForegroundColor Yellow
       gcloud scheduler jobs delete $JobName --location $Region --project $ProjectId --quiet | Out-Null
-      Write-Host "  🗑️ [$JobName] REMOVED" -ForegroundColor Gray
+      Write-Host "  [REMOVED] [$JobName] REMOVED" -ForegroundColor Gray
     } else {
-      Write-Host "  ⏸️ [$JobName] DISABLED (Not scheduled)" -ForegroundColor Gray
+      Write-Host "  [DISABLED] [$JobName] DISABLED (Not scheduled)" -ForegroundColor Gray
     }
   }
 }

@@ -381,10 +381,13 @@ def main():
                 dry_run=args.dry_run,
             )
         except (exceptions.NotFound, exceptions.PermissionDenied) as exc:
-            logger.warning(f"Firestore database or collection '{coll}' not found or accessible in project {fs_project}: {exc}. Skipping collection.")
+            logger.info(f"Optional Firestore collection '{coll}' not enabled or accessible in project {fs_project}. Skipping live Firestore stream.")
             continue
         except Exception as exc:
-            logger.error(f"Unexpected error querying Firestore collection '{coll}': {exc}. Skipping collection.")
+            if "Datastore Mode" in str(exc) or "400" in str(exc):
+                logger.info(f"Project {fs_project} uses Datastore Mode or has no Native Firestore '{coll}' collection. Skipping optional live Firestore export (using canonical BigQuery tables).")
+            else:
+                logger.warning(f"Skipping optional Firestore collection '{coll}': {exc}")
             continue
 
         # Decide target table (sharded vs consolidated)

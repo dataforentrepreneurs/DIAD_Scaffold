@@ -26,7 +26,7 @@ rmdir /s /q "%USERPROFILE%\DIAD" 2>nul
 :check_version
 if not exist "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" goto do_download
 
-findstr /c:"v1.0.7" "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" >nul 2>&1
+findstr /c:"v1.0.8" "%USERPROFILE%\DIAD\scripts\onboarding_dashboard.py" >nul 2>&1
 if errorlevel 1 goto do_upgrade
 goto run_setup
 

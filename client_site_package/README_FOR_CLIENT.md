@@ -15,6 +15,13 @@ Welcome to your self-hosted AI suite! All components run directly on your own in
 | **`internal_chatbot.html`** | **Text-to-SQL Business Advisor** | Executives & Managers | Host on your internal portal (Restricted Access) |
 | **`external_chatbot.html`** | **Customer Support Chatbot** | Support Team / Public Customers | Host on your site (e.g. `/support` page or full-screen view) |
 | **`_redirects`** | **Clean URL Routing Configuration** | Web Developer | Upload to the root of your web host |
+| **`CONNECTION_AND_DATA_AUDIT.md`** | **Data & Schema Readiness Report** | Store Owner / Data Team | Lists connected sources, skipped files & database schema notes |
+
+---
+
+## 📊 Connection Status, Incorporated Files & Database Schema Readiness
+
+{{CONNECTION_AUDIT_SUMMARY}}
 
 ---
 

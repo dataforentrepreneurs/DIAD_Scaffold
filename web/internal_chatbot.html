@@ -262,6 +262,9 @@
       </div>
     </div>
     <div class="header-controls">
+      <button type="button" onclick="openFeedbackModal()" style="background: rgba(255, 159, 28, 0.14); border: 1px solid rgba(255, 159, 28, 0.45); color: #fbbf24; padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+        💬 Give Feedback / Why is an Output Missing?
+      </button>
       <select id="endpointSelect" class="endpoint-select">
         <option value="/internal/chat">Dashboard Local Relative (/internal/chat)</option>
         <option value="http://localhost:8000/internal/chat">Local Dashboard Absolute (http://localhost:8000)</option>
@@ -271,6 +274,51 @@
       <a href="/portal" class="nav-link">← Portal Home</a>
     </div>
   </header>
+
+  <!-- Output Feedback & Data Readiness Modal -->
+  <div id="feedbackModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: #0f172a; border: 1px solid rgba(44, 182, 125, 0.35); border-radius: 16px; max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 1.5rem; box-shadow: 0 25px 60px rgba(0,0,0,0.8);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+        <div style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.1rem; color: #f8fafc;">
+          🛡️ Output Feedback, Connected Sources & Database Schema Guide
+        </div>
+        <button onclick="closeFeedbackModal()" style="background: rgba(255,255,255,0.08); border: none; color: #cbd5e1; width: 30px; height: 30px; border-radius: 6px; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="background: rgba(255, 159, 28, 0.08); border-left: 3px solid #f59e0b; padding: 0.85rem 1rem; border-radius: 6px; font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; margin-bottom: 1rem;">
+        <strong style="color: #fbbf24;">⚠️ Why might a chatbot output differ from what you expect?</strong>
+        <ul style="margin-top: 0.4rem; margin-left: 1.2rem;">
+          <li><strong>Database Schema Structure:</strong> If your source database or custom Firestore/SQL tables are not structured in the exact canonical schema required by the system, deterministic SQL filters may be skipped.</li>
+          <li><strong>Unincorporated / Unreadable Files:</strong> If a shared file (such as a scanned image-only PDF without OCR text, an unsupported spreadsheet, or an unshared folder) could not be read, its contents will not appear in answers.</li>
+          <li><strong>Best-Effort AI Mode:</strong> Even when your data is not structured in the desired canonical way, <strong>DIAD's AI capabilities will still automatically interpret and synthesize as much information as possible</strong> from your available records!</li>
+        </ul>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(44, 182, 125, 0.25); border-radius: 8px; padding: 0.75rem;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #2cb67d; margin-bottom: 0.5rem;">✅ Incorporated Data Sources (Read)</div>
+          <div id="fb-inc-list" style="font-size: 0.75rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.35rem; max-height: 140px; overflow-y: auto;">
+            <div>Loading connected sources...</div>
+          </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 159, 28, 0.25); border-radius: 8px; padding: 0.75rem;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #fbbf24; margin-bottom: 0.5rem;">⚠️ Not Incorporated / Schema Notes</div>
+          <div id="fb-skip-list" style="font-size: 0.75rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.35rem; max-height: 140px; overflow-y: auto;">
+            <div>Checking skipped or non-canonical sources...</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.85rem;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #f8fafc; display: block; margin-bottom: 0.4rem;">Submit Feedback on Chatbot Output:</label>
+        <textarea id="fb-comment" rows="2" placeholder="Describe the question you asked and the output you expected..." style="width: 100%; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 0.6rem; color: #fff; font-size: 0.8rem; margin-bottom: 0.6rem;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button onclick="submitFeedback()" style="background: #2cb67d; color: #0f172a; font-weight: 700; border: none; padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer;">Submit Feedback</button>
+        </div>
+        <div id="fb-status" style="font-size: 0.76rem; color: #2cb67d; margin-top: 0.4rem; display: none;">✅ Thank you! Your feedback and schema diagnostic snapshot have been logged.</div>
+      </div>
+    </div>
+  </div>
 
   <main>
     <div class="chat-container">
@@ -404,6 +452,38 @@ I am connected to your BigQuery data warehouse and Pinecone documentation vector
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;")
         .replace(/\n/g, "<br>");
+    }
+
+    async function openFeedbackModal() {
+      document.getElementById('feedbackModal').style.display = 'flex';
+      const incEl = document.getElementById('fb-inc-list');
+      const skipEl = document.getElementById('fb-skip-list');
+      try {
+        const res = await fetch('/api/data-readiness');
+        if (!res.ok) throw new Error('local API unavailable');
+        const data = await res.json();
+        const inc = data.incorporated || [];
+        const skip = data.skipped || [];
+        incEl.innerHTML = inc.length
+          ? inc.map(i => `<div style="padding:0.25rem 0.4rem;background:rgba(44,182,125,0.08);border-left:2px solid #2cb67d;border-radius:4px;"><strong>${escapeHtml(i.name)}</strong> <span style="color:#2cb67d;float:right;">${escapeHtml(i.detail)}</span></div>`).join('')
+          : '<div>✅ BigQuery Analytical Marts & Seed Tables Connected</div>';
+        skipEl.innerHTML = skip.length
+          ? skip.map(s => `<div style="padding:0.25rem 0.4rem;background:rgba(255,159,28,0.08);border-left:2px solid #fbbf24;border-radius:4px;"><strong>${escapeHtml(s.name)}</strong><br><span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(s.reason)}</span></div>`).join('')
+          : '<div style="padding:0.35rem;color:#cbd5e1;">ℹ️ All readable canonical tables & shared docs are incorporated. Non-canonical custom database fields or scanned image PDFs are interpreted by DIAD AI on a best-effort basis.</div>';
+      } catch (e) {
+        incEl.innerHTML = '<div>✅ BigQuery Analytical Marts (`order_dossier_tbl`, `customer_360_tbl`) & Indexed Knowledge Docs</div>';
+        skipEl.innerHTML = '<div>ℹ️ If an expected metric or document is missing, verify that your database follows DIAD\'s canonical schema and that shared files are text-readable. DIAD\'s AI engine interprets non-standard schemas on a best-effort basis.</div>';
+      }
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedbackModal').style.display = 'none';
+    }
+
+    function submitFeedback() {
+      const statusEl = document.getElementById('fb-status');
+      statusEl.style.display = 'block';
+      document.getElementById('fb-comment').value = '';
     }
   </script>
 

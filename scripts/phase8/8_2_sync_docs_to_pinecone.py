@@ -45,6 +45,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 raw_cfg = {}
 MAX_DOC_CHARS = 200_000  # safety cap ~200 KB of text
+_skipped_files_audit: List[Dict] = []
 
 # ------------------------------------------------------
 # Logging
@@ -244,6 +245,17 @@ def crawl_drive_folder(service, folder_id: str) -> List[Dict]:
                         "version": f.get("version"),
                     }
                 )
+            else:
+                logger.warning("   ⚠ Skipping unsupported Drive file format: %s (mime=%s)", name, mime)
+                _skipped_files_audit.append(
+                    {
+                        "source": "gdrive",
+                        "doc_id": file_id,
+                        "name": name,
+                        "mimeType": mime,
+                        "reason": f"Unsupported file format ({mime}) — convert to Google Doc, PDF, DOCX, or TXT",
+                    }
+                )
 
         page_token = resp.get("nextPageToken")
         if not page_token:
@@ -422,11 +434,29 @@ def crawl_drive(folder_id: str, service_account_key_path: str) -> List[Dict]:
                 file_id,
                 e,
             )
+            _skipped_files_audit.append(
+                {
+                    "source": "gdrive",
+                    "doc_id": file_id,
+                    "name": name,
+                    "mimeType": mime,
+                    "reason": f"Failed to read/extract text ({type(e).__name__}: {e})",
+                }
+            )
             continue
 
         text = (text or "").strip()
         if not text:
             logger.warning("⚠ Extracted empty text from Drive file %s; skipping.", name)
+            _skipped_files_audit.append(
+                {
+                    "source": "gdrive",
+                    "doc_id": file_id,
+                    "name": name,
+                    "mimeType": mime,
+                    "reason": "No extractable text found (empty document or scanned image PDF without OCR text layer)",
+                }
+            )
             continue
 
         docs.append(
@@ -961,6 +991,8 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
             sync_state = {}
 
     all_docs = []
+    _skipped_files_audit.clear()
+    incorporated_docs = []
     source = (source or "all").lower()
 
     # ---- Drive: crawl ALL configured folders if source matches ----
@@ -975,6 +1007,12 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
                 except HttpError as e:
                     msg = str(e)
                     logger.warning("⚠ Google Drive crawl failed for folder %s: %s", drive_id, msg)
+                    _skipped_files_audit.append({
+                        "source": "gdrive",
+                        "doc_id": drive_id,
+                        "name": f"Google Drive Folder ({drive_id})",
+                        "reason": "Google Drive API not enabled or folder not shared with Service Account email",
+                    })
                     if "accessNotConfigured" in msg:
                         logger.warning(
                             "⚠ Google Drive API is not enabled or not configured for this project. "
@@ -982,6 +1020,12 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
                         )
                 except Exception as e:
                     logger.warning("⚠ Google Drive crawl failed for folder %s with unexpected error: %s", drive_id, e)
+                    _skipped_files_audit.append({
+                        "source": "gdrive",
+                        "doc_id": drive_id,
+                        "name": f"Google Drive Folder ({drive_id})",
+                        "reason": f"Folder crawl failed ({type(e).__name__}: {e})",
+                    })
         else:
             logger.info("ℹ Skipping Google Drive (no SA key found).")
 
@@ -1036,6 +1080,13 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
         if incremental and not force:
             if prev_state.get("hash") == doc_hash or (file_version and prev_state.get("version") == file_version):
                 logger.info(f"   ⏩ [Incremental] Document unchanged ({d['name']}). Skipping.")
+                incorporated_docs.append({
+                    "source": d["source"],
+                    "doc_id": d["doc_id"],
+                    "name": d.get("name"),
+                    "visibility": visibility,
+                    "status": "Verified in Index (Unchanged)",
+                })
                 continue
         chunk_size = int(doc_rag.get("chunk_tokens", 300)) * 4  # rough proxy: 1 token ~ 4 chars
         overlap = int(doc_rag.get("chunk_overlap", 50)) * 4
@@ -1047,6 +1098,12 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
 
         if len(chunks) == 0:
             logger.warning(f"   ⚠ Skipping document (no text): {d['name']}")
+            _skipped_files_audit.append({
+                "source": d["source"],
+                "doc_id": d["doc_id"],
+                "name": d.get("name"),
+                "reason": "Document produced 0 text chunks after parsing",
+            })
             continue
 
         # 2️⃣ Embed chunks (with provider fallback)
@@ -1117,10 +1174,25 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
                 "version": file_version,
                 "last_synced": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "name": d.get("name"),
-                "source": d["source"]
+                "source": d["source"],
+                "chunks": len(chunks),
             }
+            incorporated_docs.append({
+                "source": d["source"],
+                "doc_id": d["doc_id"],
+                "name": d.get("name"),
+                "chunks": len(chunks),
+                "visibility": visibility,
+                "status": f"Read & Indexed ({len(chunks)} chunks)",
+            })
         except Exception as e:
             logger.error(f"   ❌ Pinecone upsert FAILED for {d['name']}: {e}")
+            _skipped_files_audit.append({
+                "source": d["source"],
+                "doc_id": d["doc_id"],
+                "name": d.get("name"),
+                "reason": f"Vector upsert failed ({type(e).__name__}: {e})",
+            })
             continue
 
     state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1129,6 +1201,37 @@ def sync_documents(config_path: str, source: str = "all", incremental: bool = Fa
             json.dump(sync_state, f, indent=2)
     except Exception as e:
         logger.warning(f"Failed to persist sync state cache: {e}")
+
+    # Persist Document & Source Readiness Audit Report
+    audit_file = Path("logs/docs_audit_report.json")
+    try:
+        audit_payload = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "incorporated_docs": incorporated_docs,
+            "skipped_docs": list(_skipped_files_audit),
+            "advisory": (
+                "Note: If certain shared files are not listed under Incorporated Documents, they may be "
+                "scanned image-only PDFs without OCR text, unsupported spreadsheet/binary formats, or outside "
+                "the shared folder permissions. Furthermore, where documents or database tables do not follow "
+                "DIAD's canonical schema structure, DIAD's AI engine will still interpret available content on a best-effort basis."
+            ),
+        }
+        with open(audit_file, "w", encoding="utf-8") as f:
+            json.dump(audit_payload, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to write docs_audit_report.json: {e}")
+
+    logger.info("\n==================================================================")
+    logger.info("📋 DOCUMENT & KNOWLEDGE BASE READINESS AUDIT")
+    logger.info(f"   ✅ Incorporated / Read Documents : {len(incorporated_docs)}")
+    for inc in incorporated_docs:
+        logger.info(f"      • [{inc['source'].upper()}] {inc['name']} — {inc['status']}")
+    logger.info(f"   ⚠️ Skipped / Unreadable Files    : {len(_skipped_files_audit)}")
+    for sk in _skipped_files_audit:
+        logger.info(f"      • [{sk['source'].upper()}] {sk['name']} — Reason: {sk['reason']}")
+    logger.info("   ℹ️ Advisory: Unstructured documents or non-canonical database schemas are")
+    logger.info("      interpreted by DIAD's AI on a best-effort basis.")
+    logger.info("==================================================================")
 
     logger.info("\n🎉 ALL DOCUMENTS PROCESSED (or aborted on quota).")
     print_index_counts(index)

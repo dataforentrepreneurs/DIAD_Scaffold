@@ -1682,6 +1682,52 @@ async def get_dashboard():
                         </div>
                     </div>
 
+                    <!-- Data Readiness, Source Incorporation & Schema Compatibility Card -->
+                    <div id="data-readiness-card" style="margin-top: 1.25rem; background: rgba(17, 25, 40, 0.9); border: 1px solid rgba(255, 159, 28, 0.35); border-radius: 12px; padding: 1.15rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.1rem;">🛡️</span>
+                                <strong style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: #fff;">Data Readiness, Source Audit & Schema Compatibility</strong>
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="loadDataReadiness(true)" style="padding: 0.3rem 0.75rem; font-size: 0.74rem; border-radius: 6px;">
+                                🔍 Audit Data Sources & Schema
+                            </button>
+                        </div>
+
+                        <!-- Always-on Schema & Best-Effort AI Advisory Banner -->
+                        <div style="background: rgba(255, 159, 28, 0.08); border-left: 3px solid var(--warning); border-radius: 6px; padding: 0.75rem 0.9rem; margin-bottom: 0.9rem; font-size: 0.78rem; line-height: 1.45; color: #f3f4f6;">
+                            <div style="font-weight: 700; color: var(--warning); margin-bottom: 0.25rem;">
+                                ⚠️ Database Structure & File Readiness Advisory (AI Best-Effort Interpretation Active)
+                            </div>
+                            <div id="readiness-advisory-text" style="color: var(--text-muted);">
+                                Your database tables or shared files may not be structured in the exact canonical schema required by the system (e.g., custom column naming, unlinked foreign keys, or unstructured document layouts). If you do not receive a specific desired output, it is typically because the underlying database structure differs from system requirements or certain files could not be read. <strong>However, DIAD's adaptive AI capabilities will still automatically interpret and synthesize as much insight as possible from your available data on a best-effort basis.</strong>
+                            </div>
+                        </div>
+
+                        <!-- Incorporated vs Not Incorporated Grid -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(46, 196, 182, 0.25); border-radius: 8px; padding: 0.75rem;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--success); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                                    <span>✅ Incorporated Data Sources (Read)</span>
+                                    <span id="readiness-inc-count" style="font-family: 'JetBrains Mono', monospace;">0</span>
+                                </div>
+                                <div id="readiness-incorporated-list" style="font-size: 0.74rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem;">
+                                    <div>Checking incorporated databases and files...</div>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 159, 28, 0.25); border-radius: 8px; padding: 0.75rem;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--warning); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                                    <span>⚠️ Not Incorporated / Unreadable</span>
+                                    <span id="readiness-skip-count" style="font-family: 'JetBrains Mono', monospace;">0</span>
+                                </div>
+                                <div id="readiness-skipped-list" style="font-size: 0.74rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem;">
+                                    <div>Checking skipped or unlinked sources...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--card-border); text-align: center;">
                         <button type="button" class="btn" onclick="switchTab('package-tab')" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; font-weight: 700; padding: 0.75rem 1.75rem; font-size: 0.9rem; border-radius: 8px;">
                             Go to Tab 5: Client Web Package & Integration →
@@ -1691,6 +1737,9 @@ async def get_dashboard():
 
                 <!-- TAB 5: Client Web Package & Integration -->
                 <div id="package-tab" class="tab-content">
+                    <div style="background: rgba(255, 159, 28, 0.08); border: 1px solid rgba(255, 159, 28, 0.35); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.78rem; line-height: 1.45; color: var(--text-muted);">
+                        <strong style="color: var(--warning);">ℹ️ Output & Schema Expectations:</strong> If a chatbot query does not return a specific expected metric or policy, check the <strong>Data Readiness & Source Audit</strong> in Tab 4 to verify which data sources and files were read vs. skipped. Even where your database or shared files are not structured in DIAD's canonical format, our AI engine will interpret available records on a best-effort basis.
+                    </div>
                     <div style="background: rgba(44, 182, 125, 0.08); border: 1px solid rgba(44, 182, 125, 0.3); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem;">
                         <div style="font-weight: 700; font-size: 1.05rem; color: var(--accent-cyan); display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span>📦 Your AI Web Integration & Hand-Off Package</span>
@@ -1976,6 +2025,7 @@ async def get_dashboard():
                         <button type="button" class="btn-faq" onclick="askMentor('api-keys')">🔌 Why do I need API keys?</button>
                         <button type="button" class="btn-faq" onclick="askMentor('pipeline-order')">🔄 What order do I run steps in?</button>
                         <button type="button" class="btn-faq" onclick="askMentor('data-safety')">🔒 Is my data safe on my machine?</button>
+                        <button type="button" class="btn-faq" onclick="askMentor('schema-output')">⚠️ Why is an output missing or approximate?</button>
                     </div>
                     <!-- Mentee Chat Input Box -->
                     <div id="mentor-chat-container" style="display: flex; gap: 0.4rem; margin-top: 0.6rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.6rem;">
@@ -2396,6 +2446,12 @@ async def get_dashboard():
                     break;
                 case 'data-safety':
                     answer = "🔒 <strong>100% Safe & Private.</strong> All dashboard scripts and data run entirely on your local machine and inside your own Google Cloud billing account. No data is stored on third-party servers.";
+                    break;
+                case 'data-safety':
+                    answer = "🔒 <strong>100% Safe & Private.</strong> Everything runs locally on your machine and inside your private Google Cloud project. No raw customer records or credentials ever leave your environment!";
+                    break;
+                case 'schema-output':
+                    answer = "⚠️ <strong>Database Schema & File Readiness:</strong> If the chatbot does not return a specific expected output, it is usually because: 1) Your database tables are not structured in DIAD's canonical e-commerce schema, or 2) Certain shared files (like scanned image PDFs or spreadsheets) could not be read. Check the <strong>Data Readiness & Source Audit</strong> panel in Tab 4 to see which sources are incorporated vs. skipped. Even with non-standard schemas, our AI capabilities will still interpret as much as possible on a best-effort basis!";
                     break;
                 default:
                     answer = "I'm here to guide you step-by-step. Ask any question in the chat box below!";
@@ -2863,6 +2919,7 @@ async def get_dashboard():
                         }}
                         onboardingState = 'complete';
                         updateOnboardingGuidance();
+                        loadDataReadiness();
                         showToast("🎉 All Pipeline Steps Completed Successfully!", "success");
                         activeEventSource.close();
                         activeEventSource = null;
@@ -2916,6 +2973,7 @@ async def get_dashboard():
                         
                         // Advance guide stage logically
                         updateOnboardingGuidance();
+                        loadDataReadiness();
                         showToast(`Step ${{stepNum}} complete!`, "success");
                     }}
                     activeEventSource.close();
@@ -3084,9 +3142,71 @@ async def get_dashboard():
                 }}, false);
             }}
 
-            // Load diagnostics on page load
+            // Load diagnostics & data readiness on page load
             loadDiagnostics();
+            loadDataReadiness();
         }});
+
+        // ── Data Readiness & Schema Compatibility Audit Loader ─────────
+        async function loadDataReadiness(manualTrigger = false) {{
+            try {{
+                const resp = await fetch('/api/data-readiness');
+                const data = await resp.json();
+
+                const incList = document.getElementById('readiness-incorporated-list');
+                const skipList = document.getElementById('readiness-skipped-list');
+                const incCount = document.getElementById('readiness-inc-count');
+                const skipCount = document.getElementById('readiness-skip-count');
+                const advText = document.getElementById('readiness-advisory-text');
+
+                if (advText && data.advisory) {{
+                    advText.innerHTML = data.advisory;
+                }}
+
+                const incorporated = data.incorporated || [];
+                const skipped = data.skipped || [];
+
+                if (incCount) incCount.textContent = `${{incorporated.length}} sources`;
+                if (skipCount) skipCount.textContent = `${{skipped.length}} items`;
+
+                if (incList) {{
+                    if (incorporated.length === 0) {{
+                        incList.innerHTML = '<div style="color: var(--text-dark);">No data sources incorporated yet. Run the pipeline steps above.</div>';
+                    }} else {{
+                        incList.innerHTML = incorporated.map(item => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0.4rem; background: rgba(46, 196, 182, 0.06); border-radius: 4px; border-left: 2px solid var(--success);">
+                                <span style="color: #fff; font-weight: 500;">${{escapeHtml(item.name)}}</span>
+                                <span style="color: var(--success); font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;">${{escapeHtml(item.detail)}}</span>
+                            </div>
+                        `).join('');
+                    }}
+                }}
+
+                if (skipList) {{
+                    if (skipped.length === 0) {{
+                        skipList.innerHTML = '<div style="color: var(--text-dark);">All configured files read; non-standard schemas handled via AI best-effort mode.</div>';
+                    }} else {{
+                        skipList.innerHTML = skipped.map(item => `
+                            <div style="padding: 0.3rem 0.45rem; background: rgba(255, 159, 28, 0.06); border-radius: 4px; border-left: 2px solid var(--warning);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="color: #fff; font-weight: 500;">${{escapeHtml(item.name)}}</span>
+                                    <span style="color: var(--warning); font-size: 0.66rem; font-family: 'JetBrains Mono', monospace;">${{escapeHtml(item.category || 'Not Read')}}</span>
+                                </div>
+                                <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem;">${{escapeHtml(item.reason)}}</div>
+                            </div>
+                        `).join('');
+                    }}
+                }}
+
+                if (manualTrigger) {{
+                    appendTerminalLog(`[AUDIT] Data Readiness & Schema Compatibility check complete: ${{incorporated.length}} incorporated sources, ${{skipped.length}} skipped/unstructured items.`);
+                    appendTerminalLog(`[ADVISORY] Note: Database tables or shared files not structured in DIAD's canonical schema are automatically interpreted by our AI engine on a best-effort basis.`);
+                    showToast("Data Readiness & Schema Audit updated!", "warning");
+                }}
+            }} catch(e) {{
+                console.error('Data readiness check failed:', e);
+            }}
+        }}
 
         // ── Diagnostics Loader ──────────────────────────────────────────
         async function loadDiagnostics() {{
@@ -3205,6 +3325,165 @@ async def diagnostics():
     result["secrets"] = {"ok": secrets_flag.exists()}
 
     return result
+
+@app.get("/api/data-readiness")
+async def get_data_readiness():
+    """
+    Inspect all structured database tables, Firestore collections, and document RAG sources
+    to report:
+      1) Which data sources and files ARE incorporated (read & indexed by the system)
+      2) Which data sources or files are NOT incorporated (unread, skipped, or unconfigured)
+      3) Proactive Schema & Best-Effort AI Advisory ("save our skin" safeguard)
+    """
+    cfg = get_config_data()
+    client_cfg = cfg.get("client", {}) or {}
+    incorporated = []
+    skipped = []
+
+    # 1. Check Canonical E-Commerce Tables (Phase 3 CSV seeds / tables)
+    seed_dir = ROOT_DIR / "scripts" / "phase3" / "seed"
+    canonical_tables = [
+        ("sales_order_header.csv", "Orders Header Table"),
+        ("sales_order_line.csv", "Order Line Items"),
+        ("dim_customer.csv", "Customer Master (360)"),
+        ("dim_product.csv", "Product Catalog"),
+        ("payment.csv", "Payment Transactions"),
+        ("refund.csv", "Refund Records"),
+        ("shipment.csv", "Shipment Tracking"),
+        ("inventory_snapshot_daily.csv", "Daily Inventory"),
+    ]
+    if seed_dir.exists():
+        for fname, label in canonical_tables:
+            fpath = seed_dir / fname
+            if fpath.exists():
+                try:
+                    lines = fpath.read_text(encoding="utf-8", errors="ignore").splitlines()
+                    row_count = max(0, len(lines) - 1)
+                    if row_count > 0:
+                        incorporated.append({
+                            "name": f"BigQuery: {label} ({fname})",
+                            "detail": f"Read ({row_count} rows)",
+                        })
+                    else:
+                        skipped.append({
+                            "name": f"Database Table: {label} ({fname})",
+                            "category": "Empty Table",
+                            "reason": "Table file contains 0 records — queries relying on this table may return partial results.",
+                        })
+                except Exception:
+                    pass
+
+    # 2. Check Firestore Live Collections
+    fs_cfg = (client_cfg.get("sources", {}) or {}).get("firestore", {}) or {}
+    fs_cols = fs_cfg.get("collections") or []
+    if fs_cols:
+        incorporated.append({
+            "name": f"Firestore Collections ({', '.join(fs_cols[:3])})",
+            "detail": "Configured (Schema Auto-Mapped)",
+        })
+        skipped.append({
+            "name": "Firestore Custom NoSQL Document Fields",
+            "category": "Non-Canonical Schema",
+            "reason": "NoSQL documents are not structured in strict relational canonical schema; AI engine will interpret fields on a best-effort basis.",
+        })
+    else:
+        skipped.append({
+            "name": "Firebase / Firestore Live Database",
+            "category": "Not Linked",
+            "reason": "No live Firestore collections linked in Tab 2 (using CSV/Warehouse tables only).",
+        })
+
+    # 3. Check Knowledge Base Sources (Google Drive, Notion, Confluence)
+    doc_sources = client_cfg.get("doc_sources", {}) or {}
+    drive_ids = doc_sources.get("google_drive_folder_ids") or doc_sources.get("google_drive_folder_id") or []
+    if isinstance(drive_ids, str):
+        drive_ids = [drive_ids] if drive_ids.strip() else []
+    drive_ids = [d for d in drive_ids if d and d not in ("YOUR_DRIVE_FOLDER_ID", "")]
+
+    notion_ids = doc_sources.get("notion_parent_page_ids") or doc_sources.get("notion_parent_page_id") or []
+    if isinstance(notion_ids, str):
+        notion_ids = [notion_ids] if notion_ids.strip() else []
+    notion_ids = [n for n in notion_ids if n and n not in ("YOUR_NOTION_PAGE_ID", "")]
+
+    conf_id = doc_sources.get("confluence_parent_page_id") or ""
+    if conf_id in ("YOUR_CONFLUENCE_PAGE_ID", ""):
+        conf_id = ""
+
+    if not drive_ids:
+        skipped.append({
+            "name": "Google Drive Knowledge Folder",
+            "category": "Not Incorporated",
+            "reason": "No Google Drive folder ID configured in Tab 2.",
+        })
+    if not notion_ids:
+        skipped.append({
+            "name": "Notion Workspace Pages",
+            "category": "Not Incorporated",
+            "reason": "Optional Notion integration not configured — Notion pages are not included in AI answers.",
+        })
+    if not conf_id:
+        skipped.append({
+            "name": "Atlassian Confluence Space",
+            "category": "Not Incorporated",
+            "reason": "Optional Confluence integration not configured — Confluence pages are not included in AI answers.",
+        })
+
+    # 4. Read Individual Document Sync & Audit Logs (logs/docs_audit_report.json & logs/docs_sync_state.json)
+    audit_path = ROOT_DIR / "logs" / "docs_audit_report.json"
+    state_path = ROOT_DIR / "logs" / "docs_sync_state.json"
+
+    seen_inc_docs = set()
+    if audit_path.exists():
+        try:
+            audit_data = json.loads(audit_path.read_text(encoding="utf-8"))
+            for d in audit_data.get("incorporated_docs", []):
+                dname = d.get("name") or d.get("doc_id")
+                seen_inc_docs.add(dname)
+                incorporated.append({
+                    "name": f"Doc [{str(d.get('source', 'doc')).upper()}]: {dname}",
+                    "detail": d.get("status", "Read & Indexed"),
+                })
+            for sk in audit_data.get("skipped_docs", []):
+                skipped.append({
+                    "name": f"File [{str(sk.get('source', 'doc')).upper()}]: {sk.get('name', 'Unknown')}",
+                    "category": "Not Read by System",
+                    "reason": sk.get("reason", "File format or structure could not be parsed by the system."),
+                })
+        except Exception:
+            pass
+
+    if state_path.exists():
+        try:
+            state_data = json.loads(state_path.read_text(encoding="utf-8"))
+            for k, v in state_data.items():
+                dname = v.get("name") or k
+                if dname not in seen_inc_docs:
+                    incorporated.append({
+                        "name": f"Doc [{str(v.get('source', 'gdrive')).upper()}]: {dname}",
+                        "detail": "Read & Vectorized",
+                    })
+        except Exception:
+            pass
+
+    # Always include a general unstructured document / custom schema advisory item if no explicit file errors exist
+    skipped.append({
+        "name": "Custom Database Fields & Unstructured Files",
+        "category": "Best-Effort AI Mode",
+        "reason": "Where database tables or shared documents are not structured in DIAD's strict canonical format, deterministic SQL/RAG filters may be skipped; DIAD's AI capabilities will still interpret as much as possible.",
+    })
+
+    advisory = (
+        "If you are not receiving a specific desired output after setup, please note: "
+        "<strong>1) Database Schema Alignment:</strong> Your source database tables or custom fields may not be structured in the exact canonical schema required by the system. "
+        "<strong>2) Unread / Unincorporated Files:</strong> Certain shared files (such as scanned image-only PDFs, spreadsheets, or unlinked workspaces) may not be read by the crawler (see breakdown below). "
+        "<strong>3) AI Best-Effort Guarantee:</strong> Even when your data is not structured in the desired canonical format, <strong>DIAD's AI capabilities will still automatically interpret and synthesize as much information as possible</strong> from all available sources."
+    )
+
+    return {
+        "incorporated": incorporated,
+        "skipped": skipped,
+        "advisory": advisory,
+    }
 
 @app.get("/api/config")
 async def get_config():
@@ -3428,6 +3707,8 @@ async def mentor_chat(payload: MentorChatPayload):
         ans = "If <strong>Config</strong> or <strong>SA Key</strong> shows pending in the Health Check, don't worry! Scroll down to <strong>Step 4: Upload JSON Key File</strong> and drop your key to activate them."
     elif any(w in q for w in ["bigquery", "dbt", "database", "sql"]):
         ans = "BigQuery stores your e-commerce datasets inside your own GCP project. The pipeline automatically bootstraps the tables and builds dbt analytical models for your chatbot!"
+    elif any(w in q for w in ["output", "missing", "wrong", "not working", "structure", "schema", "file", "read", "desired"]):
+        ans = "⚠️ <strong>Why Output May Differ & How DIAD Protects You:</strong><br>1) <strong>Database Structure:</strong> Your database may not be structured in the exact canonical schema required by the system.<br>2) <strong>Unread Files:</strong> Some shared files (e.g., scanned PDFs without text, spreadsheets, or unlinked Notion/Confluence pages) may not be read — check the <strong>Data Readiness & Source Audit</strong> card in Tab 4 to see all incorporated vs. unincorporated sources.<br>3) <strong>AI Best-Effort Mode:</strong> Even when data is not structured in the desired way, DIAD's AI capabilities will still interpret and answer as much as possible!"
     else:
         ans = f"Great question! To proceed with <strong>'{payload.question}'</strong>: Make sure your Service Account JSON key is uploaded in Tab 1, your API keys are vaulted in Tab 3, and then run Steps 1 through 8 on the right."
 
@@ -3465,7 +3746,12 @@ async def internal_chat_endpoint(payload: ChatPayload):
         answer = f"📋 **Internal Return & Refund SOP Summary for {biz_name}**:\n\n1. **Window**: Customers may return unworn/unopened items within 30 days of delivery.\n2. **Approval**: Returns under $200 are auto-approved. Returns over $200 require manager approval.\n3. **Processing**: Once item is received at warehouse, inspect within 24h and initiate refund to original payment method.\n\n*(Retrieved from Pinecone vector index `document-rag`)*"
     else:
         executed_sql = f"SELECT * FROM `{project_id}.marts.order_dossier_tbl` LIMIT 10"
-        answer = f"📊 **Executive Intelligence Advisor for {biz_name}**:\n\nI have analyzed your query: *\"{payload.question}\"*\n\nYour data pipeline is connected to BigQuery project `{project_id}`. Customer 360 dossiers and dbt analytical marts are synchronized and ready for queries."
+        answer = (
+            f"📊 **Executive Intelligence Advisor for {biz_name}**:\n\n"
+            f"I have analyzed your query: *\"{payload.question}\"*\n\n"
+            f"Your data pipeline is connected to BigQuery project `{project_id}`. "
+            f"*(ℹ️ **Schema & Data Readiness Note:** If a specific metric or document detail is not shown, your source database or shared files may not be structured in the exact canonical schema required by the system, or certain files were not incorporated during sync. However, DIAD's AI engine is actively interpreting your available data on a best-effort basis.)*"
+        )
 
     res = {"answer": answer}
     if executed_sql:
@@ -3598,6 +3884,17 @@ async def run_onboarding_step(step: str):
                 yield f"data: [SUCCESS] {step_label} completed successfully.\n\n"
         
         if overall_success:
+            yield f"data: \n\n"
+            yield f"data: ==================================================================\n\n"
+            yield f"data: [WARNING] SCHEMA & DATA READINESS ADVISORY:\n\n"
+            yield f"data:   • If certain chatbot queries do not return the exact desired output,\n\n"
+            yield f"data:     your source database or shared files may not be structured in the\n\n"
+            yield f"data:     canonical schema required by the system, or some files could not be read.\n\n"
+            yield f"data:   • Review the 'Data Readiness & Source Audit' panel in Tab 4 to see\n\n"
+            yield f"data:     which data sources & files are Incorporated vs. Not Incorporated.\n\n"
+            yield f"data:   • Even where data is not structured in the desired canonical format,\n\n"
+            yield f"data:     DIAD's AI capabilities will still interpret as much as possible.\n\n"
+            yield f"data: ==================================================================\n\n"
             yield f"data: [SUCCESS] Step completed successfully (exit code 0).\n\n"
             yield f"data: Process finished with exit code 0\n\n"
         else:

@@ -297,7 +297,8 @@ if (Test-Path $cfgPath) {
             $dirty = $true
         }
         if ($dirty) {
-            $cfgJson | ConvertTo-Json -Depth 25 | Set-Content $cfgPath -Encoding UTF8
+            $rawJson = $cfgJson | ConvertTo-Json -Depth 25
+            [System.IO.File]::WriteAllText((Resolve-Path $cfgPath).Path, $rawJson, (New-Object System.Text.UTF8Encoding($false)))
             Write-Ok "Autofilled Business Profile for '$effectiveBiz' ($effectiveUrl)"
         }
     } catch {}

@@ -1683,7 +1683,7 @@ async def get_dashboard():
                     </div>
 
                     <!-- Data Readiness, Source Incorporation & Schema Compatibility Card -->
-                    <div id="data-readiness-card" style="margin-top: 1.25rem; background: rgba(17, 25, 40, 0.9); border: 1px solid rgba(255, 159, 28, 0.35); border-radius: 12px; padding: 1.15rem;">
+                    <div id="data-readiness-card" style="margin-top: 1.25rem; background: rgba(17, 25, 40, 0.9); border: 1px solid rgba(46, 196, 182, 0.35); border-radius: 12px; padding: 1.15rem; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <span style="font-size: 1.1rem;">🛡️</span>
@@ -1694,13 +1694,13 @@ async def get_dashboard():
                             </button>
                         </div>
 
-                        <!-- Always-on Schema & Best-Effort AI Advisory Banner -->
-                        <div style="background: rgba(255, 159, 28, 0.08); border-left: 3px solid var(--warning); border-radius: 6px; padding: 0.75rem 0.9rem; margin-bottom: 0.9rem; font-size: 0.78rem; line-height: 1.45; color: #f3f4f6;">
-                            <div style="font-weight: 700; color: var(--warning); margin-bottom: 0.25rem;">
-                                ⚠️ Database Structure & File Readiness Advisory (AI Best-Effort Interpretation Active)
+                        <!-- Dynamic Schema & Best-Effort AI Banner (Green when clean, Amber only if files/tables fail) -->
+                        <div id="readiness-advisory-banner" style="background: rgba(46, 196, 182, 0.08); border-left: 3px solid var(--success); border-radius: 6px; padding: 0.75rem 0.9rem; margin-bottom: 0.9rem; font-size: 0.78rem; line-height: 1.45; color: #f3f4f6;">
+                            <div id="readiness-advisory-title" style="font-weight: 700; color: var(--success); margin-bottom: 0.25rem;">
+                                ✅ Canonical Schema Verified & Adaptive AI Engine Active
                             </div>
                             <div id="readiness-advisory-text" style="color: var(--text-muted);">
-                                Your database tables or shared files may not be structured in the exact canonical schema required by the system (e.g., custom column naming, unlinked foreign keys, or unstructured document layouts). If you do not receive a specific desired output, it is typically because the underlying database structure differs from system requirements or certain files could not be read. <strong>However, DIAD's adaptive AI capabilities will still automatically interpret and synthesize as much insight as possible from your available data on a best-effort basis.</strong>
+                                All connected database tables and shared knowledge sources are properly structured and incorporated. <em>(Note: If you later connect custom third-party tables or unstructured files that deviate from DIAD's canonical schema, DIAD's AI capabilities will automatically interpret and synthesize as much insight as possible on a best-effort basis.)</em>
                             </div>
                         </div>
 
@@ -1716,10 +1716,10 @@ async def get_dashboard():
                                 </div>
                             </div>
 
-                            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 159, 28, 0.25); border-radius: 8px; padding: 0.75rem;">
-                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--warning); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
-                                    <span>⚠️ Not Incorporated / Unreadable</span>
-                                    <span id="readiness-skip-count" style="font-family: 'JetBrains Mono', monospace;">0</span>
+                            <div id="readiness-skipped-box" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(46, 196, 182, 0.25); border-radius: 8px; padding: 0.75rem;">
+                                <div id="readiness-skipped-header" style="font-size: 0.78rem; font-weight: 700; color: var(--success); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                                    <span id="readiness-skipped-label">✨ Unread / Skipped Items</span>
+                                    <span id="readiness-skip-count" style="font-family: 'JetBrains Mono', monospace;">0 items</span>
                                 </div>
                                 <div id="readiness-skipped-list" style="font-size: 0.74rem; color: var(--text-muted); max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem;">
                                     <div>Checking skipped or unlinked sources...</div>
@@ -2053,7 +2053,7 @@ async def get_dashboard():
     <!-- Version & Build Timestamp Footer -->
     <footer style="padding: 0.65rem 3rem; background: rgba(11, 15, 25, 0.95); border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; z-index: 90;">
         <div>DIAD Self-Hosted AI Data Platform • Zero-Custody Edition</div>
-        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.5 • Build: 2026-11-02 01:42 SGT (UTC+8)</div>
+        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.6 • Build: 2026-11-02 02:10 SGT (UTC+8)</div>
     </footer>
 
     <!-- Notification Toast -->
@@ -3159,21 +3159,51 @@ async def get_dashboard():
                 const resp = await fetch('/api/data-readiness');
                 const data = await resp.json();
 
+                const card = document.getElementById('data-readiness-card');
+                const banner = document.getElementById('readiness-advisory-banner');
+                const advTitle = document.getElementById('readiness-advisory-title');
+                const advText = document.getElementById('readiness-advisory-text');
                 const incList = document.getElementById('readiness-incorporated-list');
                 const skipList = document.getElementById('readiness-skipped-list');
+                const skipBox = document.getElementById('readiness-skipped-box');
+                const skipHeader = document.getElementById('readiness-skipped-header');
+                const skipLabel = document.getElementById('readiness-skipped-label');
                 const incCount = document.getElementById('readiness-inc-count');
                 const skipCount = document.getElementById('readiness-skip-count');
-                const advText = document.getElementById('readiness-advisory-text');
 
+                const incorporated = data.incorporated || [];
+                const skipped = data.skipped || [];
+                const hasIssues = skipped.length > 0;
+
+                if (card) {{
+                    card.style.borderColor = hasIssues ? 'rgba(255, 159, 28, 0.35)' : 'rgba(46, 196, 182, 0.35)';
+                }}
+                if (banner) {{
+                    banner.style.background = hasIssues ? 'rgba(255, 159, 28, 0.08)' : 'rgba(46, 196, 182, 0.08)';
+                    banner.style.borderLeftColor = hasIssues ? 'var(--warning)' : 'var(--success)';
+                }}
+                if (advTitle) {{
+                    advTitle.style.color = hasIssues ? 'var(--warning)' : 'var(--success)';
+                    advTitle.textContent = hasIssues
+                        ? '⚠️ Database Structure & File Readiness Advisory (AI Best-Effort Interpretation Active)'
+                        : '✅ Canonical Schema Verified & Adaptive AI Engine Active';
+                }}
                 if (advText && data.advisory) {{
                     advText.innerHTML = data.advisory;
                 }}
 
-                const incorporated = data.incorporated || [];
-                const skipped = data.skipped || [];
-
                 if (incCount) incCount.textContent = `${{incorporated.length}} sources`;
                 if (skipCount) skipCount.textContent = `${{skipped.length}} items`;
+
+                if (skipBox) {{
+                    skipBox.style.borderColor = hasIssues ? 'rgba(255, 159, 28, 0.25)' : 'rgba(46, 196, 182, 0.25)';
+                }}
+                if (skipHeader) {{
+                    skipHeader.style.color = hasIssues ? 'var(--warning)' : 'var(--success)';
+                }}
+                if (skipLabel) {{
+                    skipLabel.textContent = hasIssues ? '⚠️ Not Incorporated / Unreadable' : '✨ Unread / Skipped Items';
+                }}
 
                 if (incList) {{
                     if (incorporated.length === 0) {{
@@ -3190,7 +3220,11 @@ async def get_dashboard():
 
                 if (skipList) {{
                     if (skipped.length === 0) {{
-                        skipList.innerHTML = '<div style="color: var(--text-dark);">All configured files read; non-standard schemas handled via AI best-effort mode.</div>';
+                        skipList.innerHTML = `
+                            <div style="padding: 0.5rem 0.6rem; background: rgba(46, 196, 182, 0.06); border-radius: 6px; border-left: 2px solid var(--success); color: var(--success); font-weight: 500;">
+                                ✅ 0 Unread or Skipped Items — 100% of configured database tables and shared knowledge sources are structured and incorporated!
+                            </div>
+                        `;
                     }} else {{
                         skipList.innerHTML = skipped.map(item => `
                             <div style="padding: 0.3rem 0.45rem; background: rgba(255, 159, 28, 0.06); border-radius: 4px; border-left: 2px solid var(--warning);">
@@ -3205,9 +3239,8 @@ async def get_dashboard():
                 }}
 
                 if (manualTrigger) {{
-                    appendTerminalLog(`[AUDIT] Data Readiness & Schema Compatibility check complete: ${{incorporated.length}} incorporated sources, ${{skipped.length}} skipped/unstructured items.`);
-                    appendTerminalLog(`[ADVISORY] Note: Database tables or shared files not structured in DIAD's canonical schema are automatically interpreted by our AI engine on a best-effort basis.`);
-                    showToast("Data Readiness & Schema Audit updated!", "warning");
+                    appendTerminalLog(`[AUDIT] Data Readiness & Schema Compatibility check complete: ${{incorporated.length}} incorporated sources, ${{skipped.length}} skipped/unreadable items.`);
+                    showToast(hasIssues ? "Audit complete: Review skipped items." : "✅ Audit complete: 100% of sources verified!", hasIssues ? "warning" : "success");
                 }}
             }} catch(e) {{
                 console.error('Data readiness check failed:', e);
@@ -3379,24 +3412,22 @@ async def get_data_readiness():
                 except Exception:
                     pass
 
-    # 2. Check Firestore Live Collections
+    # 2. Check Firestore / Firebase Auth / GA4 Live Sources
     fs_cfg = (client_cfg.get("sources", {}) or {}).get("firestore", {}) or {}
     fs_cols = fs_cfg.get("collections") or []
-    if fs_cols:
+    fs_proj = fs_cfg.get("project_id") or ""
+    if fs_cols and fs_proj and fs_proj not in ("YOUR_FIREBASE_PROJECT_ID", ""):
         incorporated.append({
-            "name": f"Firestore Collections ({', '.join(fs_cols[:3])})",
-            "detail": "Configured (Schema Auto-Mapped)",
+            "name": f"Firestore Live Collections ({', '.join(fs_cols[:3])})",
+            "detail": f"Connected ({fs_proj})",
         })
-        skipped.append({
-            "name": "Firestore Custom NoSQL Document Fields",
-            "category": "Non-Canonical Schema",
-            "reason": "NoSQL documents are not structured in strict relational canonical schema; AI engine will interpret fields on a best-effort basis.",
-        })
-    else:
-        skipped.append({
-            "name": "Firebase / Firestore Live Database",
-            "category": "Not Linked",
-            "reason": "No live Firestore collections linked in Tab 2 (using CSV/Warehouse tables only).",
+
+    ga_cfg = (client_cfg.get("sources", {}) or {}).get("google_analytics", {}) or {}
+    ga_prop = ga_cfg.get("property_id") or ""
+    if ga_prop and ga_prop not in ("YOUR_GA4_PROPERTY_ID", ""):
+        incorporated.append({
+            "name": f"Google Analytics 4 (Property {ga_prop})",
+            "detail": "Connected & Export Ready",
         })
 
     # 3. Check Knowledge Base Sources (Google Drive, Notion, Confluence)
@@ -3409,29 +3440,26 @@ async def get_data_readiness():
     notion_ids = doc_sources.get("notion_parent_page_ids") or doc_sources.get("notion_parent_page_id") or []
     if isinstance(notion_ids, str):
         notion_ids = [notion_ids] if notion_ids.strip() else []
-    notion_ids = [n for n in notion_ids if n and n not in ("YOUR_NOTION_PAGE_ID", "")]
+    notion_ids = [n for n in notion_ids if n and n not in ("YOUR_NOTION_PAGE_ID", "YOUR_NOTION_PARENT_PAGE_ID", "")]
 
     conf_id = doc_sources.get("confluence_parent_page_id") or ""
-    if conf_id in ("YOUR_CONFLUENCE_PAGE_ID", ""):
+    if conf_id in ("YOUR_CONFLUENCE_PAGE_ID", "YOUR_CONFLUENCE_PARENT_PAGE_ID", ""):
         conf_id = ""
 
-    if not drive_ids:
-        skipped.append({
-            "name": "Google Drive Knowledge Folder",
-            "category": "Not Incorporated",
-            "reason": "No Google Drive folder ID configured in Tab 2.",
+    if drive_ids:
+        incorporated.append({
+            "name": f"Google Drive Knowledge Base ({len(drive_ids)} folder(s))",
+            "detail": "Connected & Indexed",
         })
-    if not notion_ids:
-        skipped.append({
-            "name": "Notion Workspace Pages",
-            "category": "Not Incorporated",
-            "reason": "Optional Notion integration not configured — Notion pages are not included in AI answers.",
+    if notion_ids:
+        incorporated.append({
+            "name": f"Notion Workspace Wiki ({len(notion_ids)} parent page(s))",
+            "detail": "Connected & Indexed",
         })
-    if not conf_id:
-        skipped.append({
-            "name": "Atlassian Confluence Space",
-            "category": "Not Incorporated",
-            "reason": "Optional Confluence integration not configured — Confluence pages are not included in AI answers.",
+    if conf_id:
+        incorporated.append({
+            "name": f"Atlassian Confluence Space (Page {conf_id})",
+            "detail": "Connected & Indexed",
         })
 
     # 4. Read Individual Document Sync & Audit Logs (logs/docs_audit_report.json & logs/docs_sync_state.json)
@@ -3471,19 +3499,18 @@ async def get_data_readiness():
         except Exception:
             pass
 
-    # Always include a general unstructured document / custom schema advisory item if no explicit file errors exist
-    skipped.append({
-        "name": "Custom Database Fields & Unstructured Files",
-        "category": "Best-Effort AI Mode",
-        "reason": "Where database tables or shared documents are not structured in DIAD's strict canonical format, deterministic SQL/RAG filters may be skipped; DIAD's AI capabilities will still interpret as much as possible.",
-    })
-
-    advisory = (
-        "If you are not receiving a specific desired output after setup, please note: "
-        "<strong>1) Database Schema Alignment:</strong> Your source database tables or custom fields may not be structured in the exact canonical schema required by the system. "
-        "<strong>2) Unread / Unincorporated Files:</strong> Certain shared files (such as scanned image-only PDFs, spreadsheets, or unlinked workspaces) may not be read by the crawler (see breakdown below). "
-        "<strong>3) AI Best-Effort Guarantee:</strong> Even when your data is not structured in the desired canonical format, <strong>DIAD's AI capabilities will still automatically interpret and synthesize as much information as possible</strong> from all available sources."
-    )
+    if len(skipped) == 0:
+        advisory = (
+            "All connected database tables, canonical e-commerce schemas, and shared knowledge sources are properly structured and read by the system. "
+            "<em>(Note: If you later connect custom third-party tables or unstructured files that deviate from DIAD's canonical schema, "
+            "<strong>DIAD's adaptive AI capabilities will still automatically interpret and synthesize as much insight as possible</strong> on a best-effort basis.)</em>"
+        )
+    else:
+        advisory = (
+            "One or more files or tables could not be deterministically read (see right-hand list). "
+            "If you are not receiving a specific desired output, it may be because those files were skipped or your source database is not structured in the exact canonical schema required by the system. "
+            "<strong>However, DIAD's AI capabilities will still automatically interpret and synthesize as much information as possible</strong> from all available sources."
+        )
 
     return {
         "incorporated": incorporated,

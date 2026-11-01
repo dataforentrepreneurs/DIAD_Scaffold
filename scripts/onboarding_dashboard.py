@@ -2050,6 +2050,12 @@ async def get_dashboard():
         </section>
     </main>
 
+    <!-- Version & Build Timestamp Footer -->
+    <footer style="padding: 0.65rem 3rem; background: rgba(11, 15, 25, 0.95); border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; z-index: 90;">
+        <div>DIAD Self-Hosted AI Data Platform • Zero-Custody Edition</div>
+        <div id="diad-build-version-badge" style="color: var(--accent-cyan); font-weight: 600;">🟢 Latest Push Active: v1.0.5 • Build: 2026-11-02 01:42 SGT (UTC+8)</div>
+    </footer>
+
     <!-- Notification Toast -->
     <div id="toast" class="notification-toast">
         <span class="notification-icon" id="toast-icon"></span>

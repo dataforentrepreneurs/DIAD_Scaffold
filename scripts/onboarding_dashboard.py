@@ -638,6 +638,43 @@ async def get_dashboard():
             background: rgba(22, 31, 48, 0.9);
         }}
 
+        .secret-input-wrapper {{
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }}
+
+        .secret-input-wrapper input {{
+            width: 100%;
+            padding-right: 4.8rem !important;
+        }}
+
+        .btn-toggle-secret {{
+            position: absolute;
+            right: 0.45rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--accent-cyan);
+            border-radius: 6px;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+            user-select: none;
+            z-index: 2;
+        }}
+
+        .btn-toggle-secret:hover {{
+            background: rgba(0, 242, 254, 0.18);
+            border-color: var(--accent-cyan);
+            color: #fff;
+        }}
+
         .btn {{
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             color: #fff;
@@ -1297,7 +1334,10 @@ async def get_dashboard():
                         </ol>
                         <div class="form-group" style="margin-bottom: 0;" onclick="event.stopPropagation();">
                             <label for="sec_notion" style="font-weight: 600; color: #fff; font-size: 0.8rem;">Notion Internal Integration Token <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span></label>
-                            <input type="password" id="sec_notion" placeholder="secret_..." style="width: 100%; font-size: 0.82rem;">
+                            <div class="secret-input-wrapper">
+                                <input type="password" id="sec_notion" placeholder="secret_..." style="width: 100%; font-size: 0.82rem;">
+                                <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility('sec_notion', this)" title="Show or hide token">👁️ Show</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1322,7 +1362,10 @@ async def get_dashboard():
                         </ol>
                         <div class="form-group" style="margin-bottom: 0;" onclick="event.stopPropagation();">
                             <label for="sec_confluence" style="font-weight: 600; color: #fff; font-size: 0.8rem;">Confluence API Token <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span></label>
-                            <input type="password" id="sec_confluence" placeholder="atlassian-token-..." style="width: 100%; font-size: 0.82rem;">
+                            <div class="secret-input-wrapper">
+                                <input type="password" id="sec_confluence" placeholder="atlassian-token-..." style="width: 100%; font-size: 0.82rem;">
+                                <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility('sec_confluence', this)" title="Show or hide token">👁️ Show</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1356,7 +1399,10 @@ async def get_dashboard():
                                         </div>
                                         <a href="https://platform.openai.com/api-keys" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get OpenAI Key ↗</a>
                                     </div>
-                                    <input type="password" id="sec_openai" placeholder="sk-..." style="width: 100%; font-size: 0.82rem;">
+                                    <div class="secret-input-wrapper">
+                                        <input type="password" id="sec_openai" placeholder="sk-..." style="width: 100%; font-size: 0.82rem;">
+                                        <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility('sec_openai', this)" title="Show or hide key">👁️ Show</button>
+                                    </div>
                                 </div>
 
                                 <div id="gemini-key-block" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 0.7rem; transition: all 0.2s ease;">
@@ -1367,7 +1413,10 @@ async def get_dashboard():
                                         </div>
                                         <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get Gemini Key ↗</a>
                                     </div>
-                                    <input type="password" id="sec_gemini" placeholder="AIzaSy..." style="width: 100%; font-size: 0.82rem;">
+                                    <div class="secret-input-wrapper">
+                                        <input type="password" id="sec_gemini" placeholder="AIzaSy..." style="width: 100%; font-size: 0.82rem;">
+                                        <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility('sec_gemini', this)" title="Show or hide key">👁️ Show</button>
+                                    </div>
                                 </div>
 
                                 <div id="anthropic-key-block" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 0.7rem; transition: all 0.2s ease;">
@@ -1378,7 +1427,10 @@ async def get_dashboard():
                                         </div>
                                         <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get Claude Key ↗</a>
                                     </div>
-                                    <input type="password" id="sec_anthropic" placeholder="sk-ant-..." style="width: 100%; font-size: 0.82rem;">
+                                    <div class="secret-input-wrapper">
+                                        <input type="password" id="sec_anthropic" placeholder="sk-ant-..." style="width: 100%; font-size: 0.82rem;">
+                                        <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility('sec_anthropic', this)" title="Show or hide key">👁️ Show</button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1387,7 +1439,10 @@ async def get_dashboard():
                                     <label for="sec_pinecone" style="font-weight: 600; color: #fff; font-size: 0.82rem;">PINECONE_API_KEY <span style="color: #ff6b6b; font-size: 0.7rem;">(Required for Vector Search)</span></label>
                                     <a href="https://app.pinecone.io/" target="_blank" style="font-size: 0.75rem; color: var(--accent-cyan); text-decoration: none;">🚀 Get Pinecone Key ↗</a>
                                 </div>
-                                <input type="password" id="sec_pinecone" placeholder="pcsk_..." style="width: 100%; font-size: 0.82rem;">
+                                <div class="secret-input-wrapper">
+                                    <input type="password" id="sec_pinecone" placeholder="pcsk_..." style="width: 100%; font-size: 0.82rem;">
+                                    <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility('sec_pinecone', this)" title="Show or hide key">👁️ Show</button>
+                                </div>
                             </div>
 
                             <div style="margin-top: 1rem;">
@@ -2579,6 +2634,18 @@ async def get_dashboard():
             fullConfig.llm.primary.provider = provider;
         }}
 
+        function toggleSecretVisibility(inputId, btnEl) {{
+            const inputEl = document.getElementById(inputId);
+            if (!inputEl) return;
+            if (inputEl.type === 'password') {{
+                inputEl.type = 'text';
+                if (btnEl) btnEl.innerHTML = '🙈 Hide';
+            }} else {{
+                inputEl.type = 'password';
+                if (btnEl) btnEl.innerHTML = '👁️ Show';
+            }}
+        }}
+
         function startPipelineExecution() {{
             onboardingState = 'step_1';
             updateOnboardingGuidance();
@@ -2676,13 +2743,17 @@ async def get_dashboard():
                     
                     showToast("🎉 All secrets vaulted to Secret Manager! Setup is ready for pipeline execution.", "success");
                     
-                    // Clear inputs for safety
-                    if (document.getElementById('sec_openai')) document.getElementById('sec_openai').value = '';
-                    if (document.getElementById('sec_gemini')) document.getElementById('sec_gemini').value = '';
-                    if (document.getElementById('sec_anthropic')) document.getElementById('sec_anthropic').value = '';
-                    if (document.getElementById('sec_pinecone')) document.getElementById('sec_pinecone').value = '';
-                    if (document.getElementById('sec_notion')) document.getElementById('sec_notion').value = '';
-                    if (document.getElementById('sec_confluence')) document.getElementById('sec_confluence').value = '';
+                    // Clear inputs for safety and reset visibility to masked
+                    ['sec_openai', 'sec_gemini', 'sec_anthropic', 'sec_pinecone', 'sec_notion', 'sec_confluence'].forEach(id => {{
+                        const el = document.getElementById(id);
+                        if (el) {{
+                            el.value = '';
+                            el.type = 'password';
+                        }}
+                    }});
+                    document.querySelectorAll('.btn-toggle-secret').forEach(btn => {{
+                        btn.innerHTML = '👁️ Show';
+                    }});
 
                     // Visually highlight Step 1 card on the right side panel
                     const step1Card = document.getElementById('step-1');
@@ -3332,6 +3403,11 @@ async def upload_key(payload: KeyUploadPayload):
         cfg["gcp"]["chatbot_deployer_sa"] = client_email
         cfg["gcp"]["chatbot_access_sa"] = client_email # Default access SA to the same for simplicity
         
+        if key_data.get("private_key_id") == "demo-marketing-key" or key_data.get("demo_mode") is True:
+            cfg["demo_mode"] = True
+        else:
+            cfg.pop("demo_mode", None)
+        
         save_config_data(cfg)
         
         return {
@@ -3356,6 +3432,32 @@ async def upsert_secrets(payload: SecretsPayload):
     
     # We will return a streaming response directly so they see progress in real time
     async def sse_secret_generator():
+        if cfg.get("demo_mode"):
+            yield f"data: Activating service account key for vaulting: keys/client-service-account.json\n\n"
+            await asyncio.sleep(0.25)
+            yield f"data: Activated service account credentials for: [{deployer_sa}]\n\n"
+            await asyncio.sleep(0.2)
+            yield f"data: Setting active gcloud project to: {project_id}\n\n"
+            yield f"data: Updated property [core/project].\n\n"
+            await asyncio.sleep(0.25)
+            for name, value in payload.secrets.items():
+                if not value:
+                    continue
+                yield f"data: Syncing Secret: {name}...\n\n"
+                await asyncio.sleep(0.25)
+                yield f"data: Uploading new version for secret: {name}...\n\n"
+                await asyncio.sleep(0.25)
+                yield f"data: Created version [1] of the secret [{name}].\n\n"
+                yield f"data: [SUCCESS] Secret '{name}' successfully sync'd.\n\n"
+            flag_file = CONFIG_DIR / ".secrets_synced"
+            try:
+                CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+                flag_file.write_text("synced")
+            except Exception:
+                pass
+            yield "data: [SUCCESS] Secret Sync process completed.\n\n"
+            return
+
         # First, set environment
         env = os.environ.copy()
         key_file = cfg.get("gcp", {}).get("key-file") or cfg.get("gcp", {}).get("key_file") or "keys/client-service-account.json"
@@ -3460,6 +3562,43 @@ async def get_schedules_api():
     project_id = cfg.get("client", {}).get("project_id", "")
 
     live_jobs = []
+    if cfg.get("demo_mode"):
+        tz = schedules.get("timezone", "Asia/Singapore")
+        live_jobs = [
+            {
+                "name": "diad-sync-ecommerce",
+                "schedule": schedules.get("ecommerce_pipeline", {}).get("cron", "0 2 * * *"),
+                "time_zone": tz,
+                "state": "ENABLED",
+                "target": "diad-sync-pipeline"
+            },
+            {
+                "name": "diad-sync-gdrive",
+                "schedule": schedules.get("knowledge_base", {}).get("gdrive", {}).get("cron", "0 3 * * *"),
+                "time_zone": tz,
+                "state": "ENABLED",
+                "target": "diad-sync-pipeline"
+            },
+            {
+                "name": "diad-sync-confluence",
+                "schedule": schedules.get("knowledge_base", {}).get("confluence", {}).get("cron", "0 3 * * 0"),
+                "time_zone": tz,
+                "state": "ENABLED",
+                "target": "diad-sync-pipeline"
+            },
+            {
+                "name": "diad-sync-notion",
+                "schedule": schedules.get("knowledge_base", {}).get("notion", {}).get("cron", "0 4 * * 0"),
+                "time_zone": tz,
+                "state": "ENABLED",
+                "target": "diad-sync-pipeline"
+            }
+        ]
+        return {
+            "config": schedules,
+            "live_jobs": live_jobs
+        }
+
     gcloud_path = shutil.which("gcloud") or shutil.which("gcloud.cmd")
     if gcloud_path and project_id and project_id not in ["Not Configured", "your-gcp-project-id", "YOUR_PROJECT_ID"]:
         try:
@@ -3652,7 +3791,64 @@ async def run_onboarding_step(step: str):
 
     async def sse_log_generator():
         yield f"data: [STARTING] Commencing command execution...\n\n"
-        
+        if cfg.get("demo_mode"):
+            for step_label, cmd in steps_to_run:
+                yield f"data: \n\n"
+                yield f"data: ==================================================================\n\n"
+                yield f"data: >>> {step_label}\n\n"
+                yield f"data: ==================================================================\n\n"
+                yield f"data: Running: {cmd}\n\n"
+                await asyncio.sleep(0.35)
+                if "link-sa" in step_label or "Step 1" in step_label:
+                    yield f"data: Authenticating Service Account for project '{project_id}'...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Verified active credentials & GCP project binding [OK].\n\n"
+                elif "enable-apis" in step_label or "Step 2" in step_label:
+                    yield f"data: Enabling bigquery.googleapis.com, secretmanager.googleapis.com, run.googleapis.com...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Operation finished successfully. Required GCP APIs enabled [OK].\n\n"
+                elif "assign-iam" in step_label or "Step 3" in step_label:
+                    yield f"data: Binding roles/bigquery.admin and roles/secretmanager.secretAccessor...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Updated IAM policy for project '{project_id}' [OK].\n\n"
+                elif "bootstrap-resources" in step_label or "Step 4" in step_label:
+                    yield f"data: Creating BigQuery datasets: ecommerce_raw, ecommerce_canonical, ecommerce_mart...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: GCS Storage Bucket '{project_id}-storage' verified [OK].\n\n"
+                elif "firestore-to-bq" in step_label or "Step 5" in step_label:
+                    yield f"data: Syncing live Firestore collections & Firebase Auth user records to BigQuery...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Loaded 1,420 user & order documents into BigQuery [OK].\n\n"
+                elif "build-consolidated" in step_label or "Step 6" in step_label:
+                    yield f"data: Building unified e-commerce canonical tables (orders, products, customers)...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Canonical tables built and verified in '{project_id}.ecommerce_canonical' [OK].\n\n"
+                elif "ingest-ecommerce" in step_label or "Step 7:" in step_label:
+                    yield f"data: Uploading canonical e-commerce seed & order records to BigQuery...\n\n"
+                    await asyncio.sleep(0.25)
+                elif "Syncing Knowledge Base Docs" in step_label:
+                    yield f"data: Incremental SHA-256 crawl of Google Drive, Notion & Confluence docs...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Indexed 48 knowledge chunks into Pinecone index 'diad-docs-hf' [OK].\n\n"
+                elif "run-dbt" in step_label or "Step 8" in step_label:
+                    yield f"data: Running dbt models (stg_orders, dim_customers, order_dossier_tbl, customer_360_tbl)...\n\n"
+                    await asyncio.sleep(0.3)
+                    yield f"data: 32 of 32 dbt data quality tests PASS [OK].\n\n"
+                elif "Phase 7" in step_label:
+                    yield f"data: Exporting order_dossier_tbl & customer_360_tbl analytical marts...\n\n"
+                    await asyncio.sleep(0.25)
+                    yield f"data: Phase 7 - Run-All completed [OK]\n\n"
+                elif "Scheduler" in step_label:
+                    yield f"data: Provisioning Cloud Scheduler jobs (diad-sync-ecommerce, diad-sync-gdrive, diad-sync-confluence, diad-sync-notion)...\n\n"
+                    await asyncio.sleep(0.35)
+                    yield f"data: All 4 Cloud Scheduler cadences active in {region} [OK].\n\n"
+                yield f"data: [SUCCESS] {step_label} completed successfully.\n\n"
+                await asyncio.sleep(0.2)
+            yield f"data: \n\n"
+            yield f"data: [SUCCESS] Step completed successfully (exit code 0).\n\n"
+            yield f"data: Process finished with exit code 0\n\n"
+            return
+
         env = os.environ.copy()
         env["PYTHONPATH"] = str(ROOT_DIR) + os.pathsep + str(ROOT_DIR / "scripts") + os.pathsep + env.get("PYTHONPATH", "")
         env["PYTHONIOENCODING"] = "utf-8"

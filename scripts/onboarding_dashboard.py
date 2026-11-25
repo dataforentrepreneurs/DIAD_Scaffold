@@ -285,6 +285,628 @@ async def favicon():
     svg_favicon = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#7f5af0"/><text x="50" y="68" font-size="55" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">D</text></svg>"""
     return Response(content=svg_favicon, media_type="image/svg+xml")
 
+
+_ONBOARDING_TELEMETRY_JS = r"""(function() {
+  var GA_ID = "G-X4DDFJ95FQ";
+  var TRACK_ENDPOINT = "https://d4e.ai/api/track";
+  var OPTOUT_KEY = "diad_onboarding_telemetry_optout";
+  var VISITOR_KEY = "diad_onboarding_visitor_id";
+  var SESSION_KEY = "diad_onboarding_session_id";
+  var ACTIVE_WINDOW_MS = 30000;
+
+  var TAB_NAMES = {
+    "gcp-tab": "tab_1_account_setup",
+    "sources-tab": "tab_2_connect_docs",
+    "secrets-tab": "tab_3_store_analytics",
+    "pipeline-tab": "tab_4_onboarding_pipeline",
+    "package-tab": "tab_5_client_web_package",
+    "schedules-tab": "tab_6_sync_schedules"
+  };
+
+  var TAB_ORDER = {
+    "gcp-tab": 1,
+    "sources-tab": 2,
+    "secrets-tab": 3,
+    "pipeline-tab": 4,
+    "package-tab": 5,
+    "schedules-tab": 6
+  };
+
+  var STEP_NAMES = {
+    1: "step_1_link_sa_preflight",
+    2: "step_2_enable_apis_bootstrap",
+    3: "step_3_assign_iam",
+    4: "step_4_bootstrap_resources_build",
+    5: "step_5_firestore_bq_sync",
+    6: "step_6_consolidated_models_deploy",
+    7: "step_7_ingest_ecom_kb_schedule",
+    8: "step_8_run_dbt_smoke_test"
+  };
+
+  function isOptedOut() {
+    try {
+      return window.localStorage.getItem(OPTOUT_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function genId(prefix) {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return prefix + "_" + window.crypto.randomUUID();
+    }
+    return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function getVisitorId() {
+    try {
+      var v = window.localStorage.getItem(VISITOR_KEY);
+      if (!v) {
+        v = genId("ob_vis");
+        window.localStorage.setItem(VISITOR_KEY, v);
+      }
+      return v;
+    } catch (e) {
+      return genId("ob_vis");
+    }
+  }
+
+  function getSessionId() {
+    try {
+      var s = window.sessionStorage.getItem(SESSION_KEY);
+      if (!s) {
+        s = genId("ob_ses");
+        window.sessionStorage.setItem(SESSION_KEY, s);
+      }
+      return s;
+    } catch (e) {
+      return genId("ob_ses");
+    }
+  }
+
+  function getDeviceType() {
+    var w = window.innerWidth || 1280;
+    if (w < 768) return "mobile";
+    if (w < 1024) return "tablet";
+    return "desktop";
+  }
+
+  function getAttribution() {
+    var tz = "";
+    try {
+      tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    } catch (e) {}
+    return {
+      utm_source: "diad_local_dashboard",
+      utm_medium: "onboarding_suite",
+      utm_campaign: "",
+      ref: "",
+      referrer: "",
+      landing_page: "/onboarding-dashboard",
+      device_type: getDeviceType(),
+      viewport: (window.innerWidth || 0) + "x" + (window.innerHeight || 0),
+      timezone: tz,
+      language: navigator.language || ""
+    };
+  }
+
+  var state = {
+    startedAt: Date.now(),
+    totalSec: 0,
+    visibleSec: 0,
+    activeSec: 0,
+    lastInteractionAt: Date.now(),
+    currentTabId: "gcp-tab",
+    currentTabEnteredAt: Date.now(),
+    currentTabActiveAtEnter: 0,
+    currentTabTotalAtEnter: 0,
+    furthestTabIndex: 1,
+    tabActiveSec: { "gcp-tab": 0 },
+    tabTotalSec: { "gcp-tab": 0 },
+    tabVisits: { "gcp-tab": 1 },
+    runningSteps: {},
+    stepStartMs: {},
+    stepsSucceeded: {},
+    stepsFailed: {},
+    completedStages: [],
+    completedStagesSet: {},
+    lastHeartbeatBucket: 0,
+    summaryFlushed: false,
+    wrapped: false
+  };
+
+  function hasRunningStep() {
+    for (var k in state.runningSteps) {
+      if (Object.prototype.hasOwnProperty.call(state.runningSteps, k) && state.runningSteps[k]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function postTrack(eventName, params, useBeacon, forceSend) {
+    if (!forceSend && isOptedOut()) return;
+
+    var clean = {};
+    if (params) {
+      for (var k in params) {
+        if (Object.prototype.hasOwnProperty.call(params, k) && params[k] !== undefined && params[k] !== null) {
+          clean[k] = params[k];
+        }
+      }
+    }
+
+    try {
+      if (typeof window.gtag === "function" && (!isOptedOut() || forceSend)) {
+        var gaObj = Object.assign({}, clean);
+        if (useBeacon) gaObj.transport_type = "beacon";
+        window.gtag("event", eventName, gaObj);
+      }
+    } catch (e) {}
+
+    var body = JSON.stringify({
+      event_name: eventName,
+      session_id: getSessionId(),
+      visitor_id: getVisitorId(),
+      page_path: "/onboarding-dashboard",
+      page_url: "http://localhost:8000/",
+      timestamp: new Date().toISOString(),
+      attribution: getAttribution(),
+      params: clean
+    });
+
+    try {
+      if (useBeacon && typeof navigator.sendBeacon === "function") {
+        var blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
+        if (navigator.sendBeacon(TRACK_ENDPOINT, blob)) return;
+      }
+      fetch(TRACK_ENDPOINT, {
+        method: "POST",
+        mode: "cors",
+        keepalive: true,
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: body
+      }).catch(function() {});
+    } catch (e) {}
+  }
+
+  function recordStageComplete(stageName, extra) {
+    if (!state.completedStagesSet[stageName]) {
+      state.completedStagesSet[stageName] = true;
+      state.completedStages.push(stageName);
+    }
+    var now = Date.now();
+    var payload = Object.assign({
+      stage_name: stageName,
+      section_name: TAB_NAMES[state.currentTabId] || state.currentTabId,
+      tab_id: state.currentTabId,
+      duration_since_tab_enter_sec: Math.round((now - state.currentTabEnteredAt) / 100) / 10,
+      duration_since_session_start_sec: Math.round((now - state.startedAt) / 100) / 10,
+      active_seconds: state.activeSec,
+      total_seconds: state.totalSec
+    }, extra || {});
+    postTrack("onboarding_stage_complete", payload, false, false);
+  }
+
+  function resolveSlowestTab() {
+    var slowest = state.currentTabId;
+    var maxSec = -1;
+    for (var id in state.tabActiveSec) {
+      if (Object.prototype.hasOwnProperty.call(state.tabActiveSec, id)) {
+        if (state.tabActiveSec[id] > maxSec) {
+          maxSec = state.tabActiveSec[id];
+          slowest = id;
+        }
+      }
+    }
+    return {
+      slowestTab: TAB_NAMES[slowest] || slowest,
+      slowestActiveSec: Math.max(0, maxSec)
+    };
+  }
+
+  function mapTabDictionary(rawMap) {
+    var out = {};
+    for (var id in rawMap) {
+      if (Object.prototype.hasOwnProperty.call(rawMap, id)) {
+        out[TAB_NAMES[id] || id] = rawMap[id];
+      }
+    }
+    return out;
+  }
+
+  function countKeys(obj) {
+    var c = 0;
+    for (var k in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, k) && obj[k]) c += 1;
+    }
+    return c;
+  }
+
+  function flushSummary() {
+    if (state.summaryFlushed) return;
+    state.summaryFlushed = true;
+    var slowestInfo = resolveSlowestTab();
+    var currentTabName = TAB_NAMES[state.currentTabId] || state.currentTabId;
+    var furthestName = currentTabName;
+    for (var id in TAB_ORDER) {
+      if (TAB_ORDER[id] === state.furthestTabIndex) {
+        furthestName = TAB_NAMES[id];
+        break;
+      }
+    }
+    var idleSec = Math.max(0, state.visibleSec - state.activeSec);
+    postTrack("onboarding_session_summary", {
+      total_seconds: state.totalSec,
+      active_seconds: state.activeSec,
+      visible_seconds: state.visibleSec,
+      idle_seconds: idleSec,
+      active_minutes: Math.round((state.activeSec / 60) * 100) / 100,
+      total_minutes: Math.round((state.totalSec / 60) * 100) / 100,
+      furthest_tab_reached: furthestName,
+      last_active_tab: currentTabName,
+      last_section_seen: currentTabName,
+      slowest_tab: slowestInfo.slowestTab,
+      slowest_tab_active_sec: slowestInfo.slowestActiveSec,
+      tab_active_sec_json: JSON.stringify(mapTabDictionary(state.tabActiveSec)),
+      tab_total_sec_json: JSON.stringify(mapTabDictionary(state.tabTotalSec)),
+      completed_stages: state.completedStages.join(","),
+      steps_succeeded_count: countKeys(state.stepsSucceeded),
+      steps_failed_count: countKeys(state.stepsFailed)
+    }, true, false);
+  }
+
+  function handleTabChange(nextTabId) {
+    if (!nextTabId || nextTabId === state.currentTabId) return;
+    var prevTabId = state.currentTabId;
+    var prevTabName = TAB_NAMES[prevTabId] || prevTabId;
+    var nextTabName = TAB_NAMES[nextTabId] || nextTabId;
+
+    var tabActiveVisit = (state.tabActiveSec[prevTabId] || 0) - state.currentTabActiveAtEnter;
+    var tabTotalVisit = (state.tabTotalSec[prevTabId] || 0) - state.currentTabTotalAtEnter;
+
+    postTrack("onboarding_tab_leave", {
+      tab_id: prevTabId,
+      tab_name: prevTabName,
+      section_name: prevTabName,
+      active_seconds: Math.max(0, tabActiveVisit),
+      total_seconds: Math.max(0, tabTotalVisit),
+      tab_active_sec: Math.max(0, tabActiveVisit),
+      tab_total_sec: Math.max(0, tabTotalVisit),
+      visit_count: state.tabVisits[prevTabId] || 1,
+      next_tab: nextTabName
+    }, false, false);
+
+    state.currentTabId = nextTabId;
+    state.currentTabEnteredAt = Date.now();
+    if (!state.tabActiveSec[nextTabId]) state.tabActiveSec[nextTabId] = 0;
+    if (!state.tabTotalSec[nextTabId]) state.tabTotalSec[nextTabId] = 0;
+    state.tabVisits[nextTabId] = (state.tabVisits[nextTabId] || 0) + 1;
+    state.currentTabActiveAtEnter = state.tabActiveSec[nextTabId];
+    state.currentTabTotalAtEnter = state.tabTotalSec[nextTabId];
+
+    if ((TAB_ORDER[nextTabId] || 0) > state.furthestTabIndex) {
+      state.furthestTabIndex = TAB_ORDER[nextTabId];
+    }
+
+    postTrack("onboarding_tab_enter", {
+      tab_id: nextTabId,
+      tab_name: nextTabName,
+      section_name: nextTabName,
+      from_tab: prevTabName,
+      elapsed_session_sec: state.totalSec,
+      active_seconds: state.activeSec,
+      total_seconds: state.totalSec
+    }, false, false);
+  }
+
+  function resolveStepNum(stepName) {
+    switch (stepName) {
+      case "link-sa":
+      case "preflight":
+        return 1;
+      case "enable-apis":
+      case "bootstrap":
+        return 2;
+      case "assign-iam":
+        return 3;
+      case "bootstrap-resources":
+      case "build-jobs":
+        return 4;
+      case "firestore-bq":
+      case "deploy-sync-job":
+        return 5;
+      case "consolidated":
+      case "deploy-chatbots":
+        return 6;
+      case "ingest-ecommerce":
+        return 7;
+      case "run-dbt":
+      case "smoke-test":
+        return 8;
+      default:
+        return 0;
+    }
+  }
+
+  function startStepTracking(stepNum, trigger) {
+    if (!stepNum) return;
+    if (!state.runningSteps[stepNum]) {
+      state.runningSteps[stepNum] = true;
+      state.stepStartMs[stepNum] = Date.now();
+      var stepLabel = STEP_NAMES[stepNum] || ("step_" + stepNum);
+      postTrack("onboarding_pipeline_step_start", {
+        step_num: stepNum,
+        step_name: stepLabel,
+        section_name: stepLabel,
+        trigger: trigger || "manual",
+        active_tab: TAB_NAMES[state.currentTabId] || state.currentTabId,
+        active_seconds: state.activeSec,
+        total_seconds: state.totalSec
+      }, false, false);
+    }
+  }
+
+  function finishStepTracking(stepNum, outcome) {
+    if (!stepNum) return;
+    if (!state.runningSteps[stepNum] && !state.stepStartMs[stepNum]) return;
+    var started = state.stepStartMs[stepNum] || Date.now();
+    var execSec = Math.round(((Date.now() - started) / 1000) * 10) / 10;
+    delete state.runningSteps[stepNum];
+    delete state.stepStartMs[stepNum];
+
+    if (outcome === "success") {
+      state.stepsSucceeded[stepNum] = true;
+      delete state.stepsFailed[stepNum];
+    } else {
+      state.stepsFailed[stepNum] = true;
+    }
+
+    var stepLabel = STEP_NAMES[stepNum] || ("step_" + stepNum);
+    postTrack(
+      outcome === "success" ? "onboarding_pipeline_step_complete" : "onboarding_pipeline_step_error",
+      {
+        step_num: stepNum,
+        step_name: stepLabel,
+        section_name: stepLabel,
+        execution_seconds: execSec,
+        active_seconds: execSec,
+        total_seconds: execSec,
+        active_tab: TAB_NAMES[state.currentTabId] || state.currentTabId
+      },
+      false,
+      false
+    );
+  }
+
+  function matchStageFromFetch(urlStr, method) {
+    if (String(method || "GET").toUpperCase() !== "POST") return null;
+    try {
+      var pathname = new URL(urlStr, window.location.origin).pathname;
+      if (pathname === "/api/upload-key") return "gcp_sa_key_upload";
+      if (pathname === "/api/config") return "config_saved";
+      if (pathname === "/api/secrets") return "secrets_synced";
+      if (pathname === "/api/upload-database") return "store_database_uploaded";
+      if (pathname === "/api/schedules") return "schedules_saved";
+      if (pathname === "/api/chat/external" || pathname === "/external/chat") return "external_chatbot_tested";
+      if (pathname === "/api/chat/internal" || pathname === "/internal/chat") return "internal_chatbot_tested";
+      if (pathname === "/api/mentor_chat") return "onboarding_mentor_used";
+    } catch (e) {}
+    return null;
+  }
+
+  function installWrappers() {
+    if (state.wrapped) return;
+    state.wrapped = true;
+
+    if (typeof window.switchTab === "function") {
+      var origSwitchTab = window.switchTab;
+      window.switchTab = function(tabId) {
+        handleTabChange(tabId);
+        return origSwitchTab.apply(this, arguments);
+      };
+    }
+
+    if (typeof window.runStep === "function") {
+      var origRunStep = window.runStep;
+      window.runStep = function(stepName) {
+        if (stepName === "run-all") {
+          startStepTracking(1, "run-all");
+        } else if (stepName === "schedule-sync" || stepName === "deploy-schedules" || String(stepName).indexOf("manual-sync-") === 0) {
+          postTrack("onboarding_stage_complete", {
+            stage_name: "sync_" + String(stepName),
+            section_name: TAB_NAMES[state.currentTabId] || state.currentTabId,
+            tab_id: state.currentTabId,
+            active_seconds: state.activeSec,
+            total_seconds: state.totalSec
+          }, false, false);
+        } else {
+          var sNum = resolveStepNum(stepName);
+          if (sNum) startStepTracking(sNum, "single");
+        }
+        return origRunStep.apply(this, arguments);
+      };
+    }
+
+    if (typeof window.updateStepUI === "function") {
+      var origUpdateStepUI = window.updateStepUI;
+      window.updateStepUI = function(stepNum, uiState) {
+        if (uiState === "active") {
+          startStepTracking(stepNum, "pipeline");
+        } else if (uiState === "success") {
+          finishStepTracking(stepNum, "success");
+        } else if (uiState === "error") {
+          finishStepTracking(stepNum, "error");
+        }
+        return origUpdateStepUI.apply(this, arguments);
+      };
+    }
+
+    if (typeof window.showPlatform === "function") {
+      var origShowPlatform = window.showPlatform;
+      window.showPlatform = function(platform) {
+        postTrack("onboarding_platform_embed_selected", {
+          platform: String(platform || ""),
+          section_name: TAB_NAMES[state.currentTabId] || state.currentTabId
+        }, false, false);
+        return origShowPlatform.apply(this, arguments);
+      };
+    }
+
+    if (typeof window.copyEmbedScript === "function") {
+      var origCopyEmbed = window.copyEmbedScript;
+      window.copyEmbedScript = function() {
+        recordStageComplete("embed_script_copied", {});
+        return origCopyEmbed.apply(this, arguments);
+      };
+    }
+
+    if (typeof window.fetch === "function") {
+      var origFetch = window.fetch.bind(window);
+      window.fetch = function(input, init) {
+        var urlStr = typeof input === "string" ? input : (input && input.url ? input.url : "");
+        var method = (init && init.method) || (input && input.method) || "GET";
+        var stageName = matchStageFromFetch(urlStr, method);
+        var callStart = Date.now();
+        var promise = origFetch(input, init);
+        if (stageName) {
+          promise.then(function(res) {
+            var durSec = Math.round(((Date.now() - callStart) / 1000) * 10) / 10;
+            if (res && res.ok) {
+              recordStageComplete(stageName, { api_duration_sec: durSec });
+            } else {
+              postTrack("onboarding_stage_error", {
+                stage_name: stageName,
+                section_name: TAB_NAMES[state.currentTabId] || state.currentTabId,
+                http_status: res ? res.status : 0,
+                api_duration_sec: durSec
+              }, false, false);
+            }
+          }).catch(function() {
+            postTrack("onboarding_stage_error", {
+              stage_name: stageName,
+              section_name: TAB_NAMES[state.currentTabId] || state.currentTabId,
+              http_status: 0
+            }, false, false);
+          });
+        }
+        return promise;
+      };
+    }
+
+    document.addEventListener("click", function(ev) {
+      state.lastInteractionAt = Date.now();
+      var target = ev.target && ev.target.closest ? ev.target.closest('a[href="/download_client_package"]') : null;
+      if (target) {
+        recordStageComplete("client_package_downloaded", {});
+      }
+    }, true);
+  }
+
+  window.diadTelemetry = {
+    isEnabled: function() {
+      return !isOptedOut();
+    },
+    setEnabled: function(enabled) {
+      var allow = Boolean(enabled);
+      if (!allow) {
+        postTrack("onboarding_telemetry_toggled", { enabled: false }, false, true);
+      }
+      try {
+        if (allow) {
+          window.localStorage.removeItem(OPTOUT_KEY);
+        } else {
+          window.localStorage.setItem(OPTOUT_KEY, "1");
+        }
+      } catch (e) {}
+      window["ga-disable-" + GA_ID] = !allow;
+      var cb = document.getElementById("diad-telemetry-toggle");
+      if (cb) cb.checked = allow;
+      if (allow) {
+        postTrack("onboarding_telemetry_toggled", { enabled: true }, false, true);
+      }
+    }
+  };
+
+  function syncToggleUI() {
+    var enabled = !isOptedOut();
+    window["ga-disable-" + GA_ID] = !enabled;
+    var cb = document.getElementById("diad-telemetry-toggle");
+    if (cb) cb.checked = enabled;
+  }
+
+  function pingActive() {
+    state.lastInteractionAt = Date.now();
+  }
+
+  window.addEventListener("pointerdown", pingActive, { passive: true });
+  window.addEventListener("keydown", pingActive, { passive: true });
+  window.addEventListener("scroll", pingActive, { passive: true });
+
+  window.setInterval(function() {
+    state.totalSec += 1;
+    state.tabTotalSec[state.currentTabId] = (state.tabTotalSec[state.currentTabId] || 0) + 1;
+
+    if (document.visibilityState === "visible") {
+      state.visibleSec += 1;
+      if (Date.now() - state.lastInteractionAt <= ACTIVE_WINDOW_MS || hasRunningStep()) {
+        state.activeSec += 1;
+        state.tabActiveSec[state.currentTabId] = (state.tabActiveSec[state.currentTabId] || 0) + 1;
+      }
+
+      var bucket = Math.floor(state.activeSec / 60);
+      if (bucket > 0 && bucket > state.lastHeartbeatBucket && state.activeSec % 60 === 0) {
+        state.lastHeartbeatBucket = bucket;
+        postTrack("onboarding_heartbeat", {
+          active_seconds: state.activeSec,
+          total_seconds: state.totalSec,
+          visible_seconds: state.visibleSec,
+          idle_seconds: Math.max(0, state.visibleSec - state.activeSec),
+          active_minutes: Math.round((state.activeSec / 60) * 100) / 100,
+          total_minutes: Math.round((state.totalSec / 60) * 100) / 100,
+          last_section_seen: TAB_NAMES[state.currentTabId] || state.currentTabId
+        }, false, false);
+      }
+    }
+  }, 1000);
+
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "hidden") {
+      flushSummary();
+    } else if (document.visibilityState === "visible") {
+      state.summaryFlushed = false;
+      state.lastInteractionAt = Date.now();
+    }
+  });
+  window.addEventListener("pagehide", flushSummary);
+
+  function boot() {
+    syncToggleUI();
+    installWrappers();
+    postTrack("onboarding_tab_enter", {
+      tab_id: "gcp-tab",
+      tab_name: TAB_NAMES["gcp-tab"],
+      section_name: TAB_NAMES["gcp-tab"],
+      from_tab: "initial_load",
+      elapsed_session_sec: 0,
+      active_seconds: 0,
+      total_seconds: 0
+    }, false, false);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+"""
+
+
+@app.get('/onboarding-telemetry.js', include_in_schema=False)
+async def onboarding_telemetry_js():
+    return Response(content=_ONBOARDING_TELEMETRY_JS, media_type="application/javascript")
+
 # Help endpoints map steps to shell/python execution calls
 def get_config_data():
     if not CONFIG_PATH.exists():
@@ -361,6 +983,25 @@ async def get_dashboard():
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <!-- Anonymous Stage-Timing Telemetry (Opt-Out via Header Toggle; Zero Business Data/PII) -->
+    <script>
+        window['ga-disable-G-X4DDFJ95FQ'] = (function() {{
+            try {{ return localStorage.getItem('diad_onboarding_telemetry_optout') === '1'; }} catch(e) {{ return false; }}
+        }})();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4DDFJ95FQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){{dataLayer.push(arguments);}}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-X4DDFJ95FQ', {{
+            page_path: '/onboarding-dashboard',
+            page_location: 'https://d4e.ai/onboarding-dashboard',
+            anonymize_ip: true
+        }});
+    </script>
+    <script src="/onboarding-telemetry.js" defer></script>
     
     <style>
         :root {{
@@ -1103,6 +1744,10 @@ async def get_dashboard():
             <div class="status-pill" style="border: 1px solid var(--card-border); background: rgba(127, 90, 240, 0.1);">
                 Readiness: <span id="readiness-score" style="color: var(--accent-cyan); font-weight: 700;">25% Ready</span>
             </div>
+            <label class="status-pill" title="Share anonymous stage-timing metrics (no business data, keys, or queries) to help improve DIAD setup speed" style="border: 1px solid var(--card-border); background: rgba(255,255,255,0.04); cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; user-select: none;">
+                <input type="checkbox" id="diad-telemetry-toggle" checked onchange="window.diadTelemetry && window.diadTelemetry.setEnabled(this.checked)" style="accent-color: var(--accent-cyan); cursor: pointer;">
+                <span>📊 Setup Metrics</span>
+            </label>
         </div>
     </header>
 

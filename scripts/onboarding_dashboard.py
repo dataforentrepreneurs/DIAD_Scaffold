@@ -903,8 +903,14 @@ _ONBOARDING_TELEMETRY_JS = r"""(function() {
 """
 
 
+def _is_telemetry_disabled_by_env() -> bool:
+    return str(os.environ.get("DIAD_NO_TELEMETRY", "")).strip().lower() in ("1", "true", "yes", "on")
+
+
 @app.get('/onboarding-telemetry.js', include_in_schema=False)
 async def onboarding_telemetry_js():
+    if _is_telemetry_disabled_by_env():
+        return Response(content="// Telemetry disabled via DIAD_NO_TELEMETRY\n", media_type="application/javascript")
     return Response(content=_ONBOARDING_TELEMETRY_JS, media_type="application/javascript")
 
 # Help endpoints map steps to shell/python execution calls
@@ -973,6 +979,26 @@ async def get_dashboard():
     else:
         website_url_val = raw_biz_url
     
+    telemetry_head_html = "" if _is_telemetry_disabled_by_env() else """    <!-- Anonymous Stage-Timing Diagnostics (Disable via DIAD_NO_TELEMETRY=1; Zero Business Data/PII) -->
+    <script>
+        window['ga-disable-G-X4DDFJ95FQ'] = (function() {
+            try { return localStorage.getItem('diad_onboarding_telemetry_optout') === '1'; } catch(e) { return false; }
+        })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4DDFJ95FQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-X4DDFJ95FQ', {
+            page_path: '/onboarding-dashboard',
+            page_location: 'https://d4e.ai/onboarding-dashboard',
+            anonymize_ip: true
+        });
+    </script>
+    <script src="/onboarding-telemetry.js" defer></script>"""
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -983,25 +1009,7 @@ async def get_dashboard():
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    <!-- Anonymous Stage-Timing Telemetry (Opt-Out via Header Toggle; Zero Business Data/PII) -->
-    <script>
-        window['ga-disable-G-X4DDFJ95FQ'] = (function() {{
-            try {{ return localStorage.getItem('diad_onboarding_telemetry_optout') === '1'; }} catch(e) {{ return false; }}
-        }})();
-    </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4DDFJ95FQ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){{dataLayer.push(arguments);}}
-        window.gtag = gtag;
-        gtag('js', new Date());
-        gtag('config', 'G-X4DDFJ95FQ', {{
-            page_path: '/onboarding-dashboard',
-            page_location: 'https://d4e.ai/onboarding-dashboard',
-            anonymize_ip: true
-        }});
-    </script>
-    <script src="/onboarding-telemetry.js" defer></script>
+{telemetry_head_html}
     
     <style>
         :root {{
@@ -1689,39 +1697,6 @@ async def get_dashboard():
     </style>
 </head>
 <body>
-    <!-- Brand Intro Video Modal -->
-    <div id="brand-video-modal" style="display: none; position: fixed; inset: 0; background: rgba(5, 7, 15, 0.88); backdrop-filter: blur(10px); z-index: 99999; align-items: center; justify-content: center; padding: 1.25rem;">
-        <div style="background: var(--bg-secondary); border: 1px solid rgba(0, 242, 254, 0.4); border-radius: 12px; width: 100%; max-width: 820px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 242, 254, 0.2); overflow: hidden; display: flex; flex-direction: column;">
-            <div style="padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); background: rgba(0, 242, 254, 0.04);">
-                <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <span style="font-size: 1.3rem;">🎬</span>
-                    <div>
-                        <div style="font-weight: 700; font-size: 1.05rem; color: #fff; font-family: 'Outfit', sans-serif;">DIAD – AI Data Platform for Entrepreneurs</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Platform architecture, data pipeline, and AI storefront overview</div>
-                    </div>
-                </div>
-                <button type="button" onclick="closeBrandVideoModal()" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; font-size: 1.1rem; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">✕</button>
-            </div>
-            <div style="position: relative; background: #000; width: 100%; aspect-ratio: 16/9; max-height: 440px;">
-                <video id="modal-video-player" controls playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block;">
-                    <source src="/assets/brand_video.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-            <div style="padding: 0.9rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; background: rgba(0, 0, 0, 0.35); border-top: 1px solid var(--card-border);">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; user-select: none;">
-                    <input type="checkbox" id="dont-show-video-again" onchange="toggleAutoShowVideo(this.checked)" style="accent-color: var(--accent-cyan); cursor: pointer;">
-                    Don't auto-launch video on next startup
-                </label>
-                <div style="display: flex; gap: 0.6rem; align-items: center;">
-                    <button type="button" class="btn" onclick="closeBrandVideoModal()" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); color: #fff; font-weight: 700; padding: 0.5rem 1.35rem; font-size: 0.82rem; border-radius: 6px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.3);">
-                        Proceed to Onboarding Suite →
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <header>
         <div class="logo-container" style="display: flex; align-items: center; gap: 0.75rem;">
             <div class="logo-glow"></div>
@@ -1735,19 +1710,12 @@ async def get_dashboard():
             <div class="status-pill">
                 GCP Project: <span id="gcp-project-status">{project_id}</span>
             </div>
-            <button type="button" onclick="openBrandVideoModal(false)" class="status-pill" style="border: 1px solid rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
-                🎬 Brand Video
-            </button>
             <a href="/portal" target="_blank" class="status-pill" style="border: 1px solid var(--card-border); background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); text-decoration: none; font-weight: 600; cursor: pointer;">
                 🌐 Public Portal (/portal) ↗
             </a>
             <div class="status-pill" style="border: 1px solid var(--card-border); background: rgba(127, 90, 240, 0.1);">
                 Readiness: <span id="readiness-score" style="color: var(--accent-cyan); font-weight: 700;">25% Ready</span>
             </div>
-            <label class="status-pill" title="Share anonymous stage-timing metrics (no business data, keys, or queries) to help improve DIAD setup speed" style="border: 1px solid var(--card-border); background: rgba(255,255,255,0.04); cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; user-select: none;">
-                <input type="checkbox" id="diad-telemetry-toggle" checked onchange="window.diadTelemetry && window.diadTelemetry.setEnabled(this.checked)" style="accent-color: var(--accent-cyan); cursor: pointer;">
-                <span>📊 Setup Metrics</span>
-            </label>
         </div>
     </header>
 
@@ -3643,49 +3611,6 @@ async def get_dashboard():
             setTimeout(() => {{
                 toast.classList.remove('show');
             }}, 4000);
-        }}
-
-        // ==========================================
-        // Brand Video Modal & Auto-Start
-        // ==========================================
-        function checkAutoShowBrandVideo() {{
-            const hideAuto = localStorage.getItem('diad_hide_intro_video');
-            const dontShowCheckbox = document.getElementById('dont-show-video-again');
-            if (dontShowCheckbox && hideAuto) {{
-                dontShowCheckbox.checked = true;
-            }}
-            if (!hideAuto) {{
-                openBrandVideoModal(true);
-            }}
-        }}
-
-        function openBrandVideoModal(isAuto = false) {{
-            const modal = document.getElementById('brand-video-modal');
-            const player = document.getElementById('modal-video-player');
-            if (modal) modal.style.display = 'flex';
-            if (player) {{
-                if (isAuto) {{
-                    player.muted = true; // Required by modern browsers for unprompted autoplay
-                }}
-                player.play().catch(e => console.log('Autoplay deferred until user interaction:', e));
-            }}
-        }}
-
-        function closeBrandVideoModal() {{
-            const modal = document.getElementById('brand-video-modal');
-            const player = document.getElementById('modal-video-player');
-            if (player) {{
-                player.pause();
-            }}
-            if (modal) modal.style.display = 'none';
-        }}
-
-        function toggleAutoShowVideo(dontShow) {{
-            if (dontShow) {{
-                localStorage.setItem('diad_hide_intro_video', 'true');
-            }} else {{
-                localStorage.removeItem('diad_hide_intro_video');
-            }}
         }}
 
         // Setup Drag & Drop listeners

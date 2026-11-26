@@ -528,6 +528,24 @@ _ONBOARDING_TELEMETRY_JS = r"""(function() {
     state.summaryFlushed = true;
     var slowestInfo = resolveSlowestTab();
     var currentTabName = TAB_NAMES[state.currentTabId] || state.currentTabId;
+    var curTabId = state.currentTabId;
+    var curTabActiveDelta = Math.max(0, (state.tabActiveSec[curTabId] || 0) - state.currentTabActiveAtEnter);
+    var curTabTotalDelta = Math.max(0, (state.tabTotalSec[curTabId] || 0) - state.currentTabTotalAtEnter);
+    if (curTabActiveDelta > 0 || curTabTotalDelta > 0) {
+      state.currentTabActiveAtEnter = state.tabActiveSec[curTabId] || 0;
+      state.currentTabTotalAtEnter = state.tabTotalSec[curTabId] || 0;
+      postTrack("onboarding_tab_leave", {
+        tab_id: curTabId,
+        tab_name: currentTabName,
+        section_name: currentTabName,
+        active_seconds: curTabActiveDelta,
+        total_seconds: curTabTotalDelta,
+        tab_active_sec: curTabActiveDelta,
+        tab_total_sec: curTabTotalDelta,
+        visit_count: state.tabVisits[curTabId] || 1,
+        next_tab: "session_exit"
+      }, true, false);
+    }
     var furthestName = currentTabName;
     for (var id in TAB_ORDER) {
       if (TAB_ORDER[id] === state.furthestTabIndex) {
